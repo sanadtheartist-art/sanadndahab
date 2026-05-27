@@ -14,6 +14,7 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
     dimensions: '',
     description: '',
     status: 'published',
+    featured: false,
     thumbnailUrl: '',
     mediaUrls: []
   });
@@ -29,6 +30,7 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
         dimensions: project.dimensions || '',
         description: project.description || '',
         status: project.status || 'published',
+        featured: !!project.featured,
         thumbnailUrl: project.thumbnailUrl || '',
         mediaUrls: project.mediaUrls || []
       });
@@ -153,12 +155,26 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
             </div>
           </div>
 
-          <div className="field">
-            <label>Status</label>
-            <select name="status" value={formData.status} onChange={handleChange}>
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-            </select>
+          <div className="row-2">
+            <div className="field">
+              <label>Status</label>
+              <select name="status" value={formData.status} onChange={handleChange}>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
+            
+            <div className="field" style={{display:'flex', flexDirection:'column', justifyContent:'center'}}>
+              <label style={{display:'flex', alignItems:'center', gap:'8px', cursor:'pointer', marginTop:'24px'}}>
+                <input 
+                  type="checkbox" 
+                  name="featured" 
+                  checked={formData.featured} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))} 
+                />
+                Featured Project
+              </label>
+            </div>
           </div>
 
           <div style={{borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:'24px', marginTop:'8px'}}>

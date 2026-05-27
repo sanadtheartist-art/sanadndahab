@@ -134,11 +134,18 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                  {project.category && (
-                    <span className="text-xs tracking-wider uppercase text-accent mb-2 font-medium bg-black/50 w-fit px-2 py-1 rounded backdrop-blur-md border border-white/10">
-                      {project.category}
-                    </span>
-                  )}
+                  <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'8px'}}>
+                    {project.featured && (
+                      <span className="text-xs tracking-wider uppercase text-black mb-2 font-bold bg-accent w-fit px-2 py-1 rounded shadow-lg">
+                        Featured
+                      </span>
+                    )}
+                    {project.category && (
+                      <span className="text-xs tracking-wider uppercase text-accent mb-2 font-medium bg-black/50 w-fit px-2 py-1 rounded backdrop-blur-md border border-white/10">
+                        {project.category}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-2xl font-display text-white mb-1 drop-shadow-md">{project.title}</h3>
                   <p className="text-sm text-white/80">
                     {[project.location, project.year].filter(Boolean).join(' • ')}

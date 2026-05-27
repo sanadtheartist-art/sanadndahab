@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 import AdminProjectModal from './AdminProjectModal';
@@ -62,13 +62,43 @@ const Admin = () => {
       const snapshot = await getDocs(collection(db, "projects"));
       const items = [];
       snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
-      // Sort by creation or sort order
-      items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      
+      // Sort by sortOrder first, fallback to creation date
+      items.sort((a, b) => {
+        const orderA = a.sortOrder !== undefined ? a.sortOrder : 9999;
+        const orderB = b.sortOrder !== undefined ? b.sortOrder : 9999;
+        if (orderA !== orderB) return orderA - orderB;
+        return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+      });
       setProjects(items);
     } catch (err) {
       console.error(err);
     } finally {
       setLoadingData(false);
+    }
+  };
+
+  const moveProject = async (index, direction) => {
+    if (direction === -1 && index === 0) return;
+    if (direction === 1 && index === projects.length - 1) return;
+    
+    const newProjects = [...projects];
+    const targetIndex = index + direction;
+    
+    // Swap in local array
+    const temp = newProjects[index];
+    newProjects[index] = newProjects[targetIndex];
+    newProjects[targetIndex] = temp;
+    
+    setProjects(newProjects);
+    
+    try {
+      // Update the sortOrder for all projects based on their new index
+      await Promise.all(newProjects.map((p, i) => updateDoc(doc(db, "projects", p.id), { sortOrder: i })));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to reorder projects");
+      fetchData(); // Revert on failure
     }
   };
 
@@ -210,12 +240,16 @@ const Admin = () => {
                     <div className="lbl">Published Projects</div>
                   </div>
                   <div className="dash-card">
-                    <div className="num">{messages.length}</div>
-                    <div className="lbl">Total Messages</div>
+                    <div className="num">{projects.filter(p => p.featured).length}</div>
+                    <div className="lbl">Featured Works</div>
                   </div>
                   <div className="dash-card">
                     <div className="num">{projects.filter(p => p.status === 'draft').length}</div>
                     <div className="lbl">Drafts</div>
+                  </div>
+                  <div className="dash-card">
+                    <div className="num">{messages.length}</div>
+                    <div className="lbl">Total Messages</div>
                   </div>
                 </div>
                 <div className="card">
@@ -241,7 +275,7 @@ const Admin = () => {
                   <p style={{color:'var(--dim)'}}>Loading projects...</p>
                 ) : (
                   <div>
-                    {projects.map(p => (
+                    {projects.map((p, idx) => (
                       <div className="project-card" key={p.id}>
                         {p.thumbnailUrl ? (
                           <img src={p.thumbnailUrl} alt="" />
@@ -252,12 +286,17 @@ const Admin = () => {
                           <h4>{p.title || 'Untitled'}</h4>
                           <div className="meta">{p.location || ''} {p.year ? `· ${p.year}` : ''}</div>
                           <div className="tags">
+                            {p.featured && <span className="tag featured">Featured</span>}
                             {p.status === 'draft' ? (
                               <span className="tag draft">Draft</span>
                             ) : (
-                              <span className="tag featured">Published</span>
+                              <span className="tag">Published</span>
                             )}
                             {p.category && <span className="tag">{p.category}</span>}
+                          </div>
+                          <div className="sort-btns" style={{display:'flex', gap:'8px', marginTop:'8px'}}>
+                            <button className="btn btn-ghost btn-sm" onClick={() => moveProject(idx, -1)} disabled={idx === 0}>↑ Up</button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => moveProject(idx, 1)} disabled={idx === projects.length - 1}>↓ Down</button>
                           </div>
                         </div>
                         <div className="project-actions">
