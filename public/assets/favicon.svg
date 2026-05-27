@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Mural artist portfolio">
+  <rect width="128" height="128" rx="24" fill="#08080a"/>
+  <path d="M24 89V38h14l26 32 26-32h14v51H88V62L68 87h-8L40 62v27H24Z" fill="#f4f0ea"/>
+  <path d="M20 102h88" stroke="#c4a574" stroke-width="8" stroke-linecap="round"/>
+  <path d="M28 26h72" stroke="#7bdff2" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+</svg>

@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/((?!assets|admin\\.html|404\\.html|robots\\.txt|sitemap\\.xml|site\\.webmanifest).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

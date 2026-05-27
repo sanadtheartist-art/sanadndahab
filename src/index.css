@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #09090b;
+    --surface: #131316;
+    --surface-2: #1a1a1f;
+    --border: #252528;
+    --text: #fafafa;
+    --dim: #71717a;
+    --accent: #c4a574;
+    --accent-dim: #c4a57426;
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-text font-sans antialiased;
+    background-image:
+      linear-gradient(135deg, rgba(123, 223, 242, 0.035), transparent 30%),
+      linear-gradient(315deg, rgba(242, 181, 212, 0.035), transparent 34%);
+  }
+}
