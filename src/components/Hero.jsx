@@ -168,40 +168,44 @@ const Hero = () => {
           id="hero-title"
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(3rem, 9vw, 7.5rem)',
+            fontSize: 'clamp(3.5rem, 11vw, 10rem)',
             fontWeight: 300,
-            lineHeight: 1.1,
-            letterSpacing: '-0.01em',
+            lineHeight: 1.05,
+            letterSpacing: '-0.02em',
             color: 'var(--text)',
             marginBottom: '1.5rem',
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'center',
-            gap: '0 0.28em',
-            overflow: 'hidden',
+            gap: '0 0.22em',
           }}
           aria-label={title.replace(/<[^>]*>/g, '')}
         >
-          {title.replace(/<[^>]*>/g, '').split(' ').map((word, i) => (
-            <span
-              key={i}
-              aria-hidden="true"
-              style={{
-                display: 'inline-block',
-                overflow: 'hidden',
-                lineHeight: 1.12,
-              }}
-            >
+          {title.replace(/<[^>]*>/g, '').split(' ').map((word, i, arr) => {
+            const isLast = i === arr.length - 1;
+            return (
               <span
+                key={i}
+                aria-hidden="true"
                 style={{
                   display: 'inline-block',
-                  animation: `wordReveal 0.85s ${0.05 + i * 0.12}s cubic-bezier(0.16,1,0.3,1) both`,
+                  overflow: 'hidden',
+                  lineHeight: 1.1,
                 }}
               >
-                {word}
+                <span
+                  style={{
+                    display: 'inline-block',
+                    animation: `wordReveal 0.85s ${0.05 + i * 0.12}s cubic-bezier(0.16,1,0.3,1) both`,
+                    color: isLast ? 'var(--accent)' : 'inherit',
+                    fontStyle: isLast ? 'italic' : 'normal',
+                  }}
+                >
+                  {word}
+                </span>
               </span>
-            </span>
-          ))}
+            );
+          })}
         </h1>
 
         {/* Subtitle */}
