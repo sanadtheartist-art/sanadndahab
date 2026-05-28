@@ -31,7 +31,7 @@ const SEO = () => {
       keywordsMeta.content = settings.metaKeywords;
     }
 
-    // Favicon
+    // Favicon and Apple Touch Icon
     if (settings.faviconUrl) {
       let icon = document.querySelector('link[rel="icon"]');
       if (!icon) {
@@ -40,12 +40,25 @@ const SEO = () => {
         document.head.appendChild(icon);
       }
       
+      let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+      if (!appleIcon) {
+        appleIcon = document.createElement('link');
+        appleIcon.rel = 'apple-touch-icon';
+        document.head.appendChild(appleIcon);
+      }
+
       // upgrade URL
       let fv = settings.faviconUrl;
       if (/googleusercontent\.com|ggpht\.com/i.test(fv)) {
         fv = fv.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '') + '=s128';
       }
       icon.href = fv;
+      
+      let appleFv = settings.faviconUrl;
+      if (/googleusercontent\.com|ggpht\.com/i.test(appleFv)) {
+        appleFv = appleFv.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '') + '=s180';
+      }
+      appleIcon.href = appleFv;
     }
 
     // OG Image
