@@ -102,15 +102,15 @@ export const siteSettings = {
   "galleryLayout": "masonry",
   "locale": "ar_EG",
   "showHeroContact": true,
-  "seoTitle": "",
-  "metaDescription": "Looking for vibrant murals and street art in Egypt? Explore Sanad's custom graffiti and wall paintings across Dahab, Nuweiba, and the beautiful Sinai region.\nاكتشف أجمل الجداريات وفن الشارع مع سند في دهب، نويبع، وسيناء. نقدم تصميمات جرافيتي مخصصة ورسم على الجدران يجمع بين الثقافة المصرية والفن المعاصر الفريد.",
+  "seoTitle": "Sanad | Mural Artist in Dahab, Sinai - رسام جداريات في دهب",
+  "metaDescription": "I am Sanad, a professional mural artist based in Dahab, Sinai. Explore my custom graffiti, street art, and wall paintings in Egypt. رسام جداريات في دهب وسيناء",
   "aboutImages": [
     "https://scontent.fcai19-2.fna.fbcdn.net/v/t39.30808-6/522743410_1174328607834250_5540796871492590014_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=VCr38iUPzUoQ7kNvwHUYAFX&_nc_oc=AdrShKWRoT8SVdG66WfqBWiBeAa77SkxHj8_-D4NFDjS-36VclxCtMSwvAnjFv-z1Eo&_nc_zt=23&_nc_ht=scontent.fcai19-2.fna&_nc_gid=nNkkXp-2ttcCIhGyYIdQyQ&_nc_ss=7b2a8&oh=00_Af4HNWsSsk_TH3sNNieb_bxmHlXttfL_RxIPGwBGMOwYAg&oe=6A192C7C"
   ],
-  "aboutTitle": "Hi, I’m Mahmoud Sanad",
-  "metaTitle": "SANAD - MURALS",
+  "aboutTitle": "Hi, I’m Mahmoud Sanad - Mural Artist in Dahab",
+  "metaTitle": "Sanad | Mural Artist in Dahab, Sinai",
   "twitterHandle": "",
-  "jobTitle": "Mural Artist",
+  "jobTitle": "Mural Artist in Dahab, Sinai - رسام جداريات",
   "socialLinks": [
     {
       "label": "Instagram",
@@ -138,7 +138,7 @@ export const siteSettings = {
   "robotsIndex": true,
   "footerText": "SANADNDAHB",
   "igLink": "https://www.instagram.com/accounts/onetap/?next=",
-  "artistName": "SANADNDAHAB",
+  "artistName": "Sanad (رسام جداريات)",
   "heroCtaText": "Projects",
   "heroSlideInterval": 10,
   "navVisibility": {
@@ -147,7 +147,7 @@ export const siteSettings = {
     "contact": true
   },
   "showStats": false,
-  "heroEyebrow": "MURAL ARIST",
+  "heroEyebrow": "MURAL ARTIST IN DAHAB - رسام جداريات دهب",
   "worksLabel": "Portfolio",
   "worksTitle": "My Projects",
   "seoDescription": "",
@@ -184,6 +184,6 @@ export const siteSettings = {
       "id": "1779903086980"
     }
   ],
-  "heroSubtitle": "Breathing life into Dahab’s walls through color, culture, and desert soul.",
+  "heroSubtitle": "Professional mural artist based in Dahab, Sinai. Breathing life into walls through color, culture, and street art. رسام جداريات محترف في دهب",
   "emailLink": "sanadndahab@gmail.com"
 };
