@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
 import { db, storage } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { uploadToCloudinary } from '../lib/cloudinary';
@@ -116,6 +115,11 @@ const AdminSettings = ({ currentTab }) => {
     const url = prompt('Enter image URL to fetch and upload to Cloudinary:');
     if (!url) return;
 
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      alert('Please add YouTube links as "Embed Code" or "Text" blocks, they cannot be uploaded to Cloudinary as images.');
+      return;
+    }
+
     setUploading(true);
     setMsg({ text: `Fetching and uploading ${fieldName}...`, type: 'success' });
     try {
@@ -134,18 +138,78 @@ const AdminSettings = ({ currentTab }) => {
   const handleSave = async (e) => {
     if (e) e.preventDefault();
     setSaving(true);
-    setMsg({ text: '', type: '' });
+    setMsg({ text: 'Saving settings...', type: 'success' });
     try {
-      await setDoc(doc(db, 'settings', 'site'), formData, { merge: true });
+      await setDoc(doc(db, 'settings', 'site'), formData);
       setMsg({ text: 'Settings saved successfully!', type: 'success' });
-
-      // Clear message after 4 seconds
-      setTimeout(() => setMsg({ text: '', type: '' }), 4000);
+      setTimeout(() => setMsg({ text: '', type: '' }), 3000);
     } catch (err) {
       console.error(err);
       setMsg({ text: 'Failed to save settings', type: 'error' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const migrateOldProjects = async () => {
+    if (!window.confirm("This will scan all existing projects and re-upload their images to Cloudinary. It skips YouTube videos. Proceed?")) return;
+    
+    setUploading(true);
+    setMsg({ text: 'Migrating old images to Cloudinary. Please wait...', type: 'success' });
+    
+    try {
+      const snap = await getDocs(collection(db, 'projects'));
+      let updatedCount = 0;
+
+      for (const projectDoc of snap.docs) {
+        const p = projectDoc.data();
+        let needsUpdate = false;
+        const updates = {};
+
+        // Helper to check and upload
+        const checkAndUpload = async (url) => {
+          if (!url || typeof url !== 'string') return url;
+          if (url.includes('cloudinary.com') || url.includes('youtube.com') || url.includes('youtu.be')) return url;
+          
+          try {
+            return await uploadToCloudinary(url);
+          } catch (e) {
+            console.error("Failed to migrate URL:", url, e);
+            return url;
+          }
+        };
+
+        if (p.thumbnailUrl && !p.thumbnailUrl.includes('cloudinary.com') && !p.thumbnailUrl.includes('youtube.com') && !p.thumbnailUrl.includes('youtu.be')) {
+          updates.thumbnailUrl = await checkAndUpload(p.thumbnailUrl);
+          if (updates.thumbnailUrl !== p.thumbnailUrl) needsUpdate = true;
+        }
+
+        if (p.mediaUrls && Array.isArray(p.mediaUrls)) {
+          const newMediaUrls = [];
+          for (const block of p.mediaUrls) {
+            if (block.type === 'media' && block.content && !block.content.includes('cloudinary.com') && !block.content.includes('youtube.com') && !block.content.includes('youtu.be')) {
+              const newUrl = await checkAndUpload(block.content);
+              if (newUrl !== block.content) needsUpdate = true;
+              newMediaUrls.push({ ...block, content: newUrl });
+            } else {
+              newMediaUrls.push(block);
+            }
+          }
+          if (needsUpdate) updates.mediaUrls = newMediaUrls;
+        }
+
+        if (needsUpdate) {
+          await updateDoc(doc(db, 'projects', projectDoc.id), updates);
+          updatedCount++;
+        }
+      }
+
+      setMsg({ text: `Migration complete! Updated ${updatedCount} projects.`, type: 'success' });
+    } catch (err) {
+      console.error(err);
+      setMsg({ text: 'Migration failed. Check console.', type: 'error' });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -323,7 +387,7 @@ const AdminSettings = ({ currentTab }) => {
 
       {currentTab === 'seo' && (
         <div className="card">
-          <div className="card-title">SEO & Footer</div>
+          <div className="card-title">SEO & System</div>
           <div className="row-2">
             <InputRow label="SEO Meta Title" name="seoTitle" />
             <InputRow label="SEO Meta Description" name="seoDescription" as="textarea" />
@@ -331,6 +395,13 @@ const AdminSettings = ({ currentTab }) => {
             <InputRow label="Open Graph (OG) Image URL" name="ogImage" hint="Used when sharing the site on social media" allowUpload={true} />
             <InputRow label="Footer Text" name="footerText" />
             <InputRow label="Footer Tagline" name="footerTagline" />
+          </div>
+          <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <h4>System Tools</h4>
+            <p className="hint mb-4">Migrate older Firebase/Imgur images to Cloudinary for faster loading. This will skip YouTube videos automatically.</p>
+            <button type="button" className="btn btn-outline" onClick={migrateOldProjects} disabled={uploading}>
+              {uploading ? 'Migrating...' : 'Migrate Old Project Images to Cloudinary'}
+            </button>
           </div>
         </div>
       )}

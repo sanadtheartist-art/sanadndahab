@@ -87,6 +87,11 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
     const url = prompt('Enter image URL to fetch and upload to Cloudinary:');
     if (!url) return;
 
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      alert('Please add YouTube links as "Embed Code" or "Text" blocks, they cannot be uploaded to Cloudinary as images.');
+      return;
+    }
+
     setUploading(true);
     try {
       const cloudinaryUrl = await uploadToCloudinary(url);
