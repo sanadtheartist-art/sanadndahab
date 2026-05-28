@@ -4,6 +4,7 @@ import { SiteProvider, useSiteSettings } from './lib/SiteContext';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import NotFound from './pages/NotFound';
+import ProjectDetails from './pages/ProjectDetails';
 import SEO from './components/SEO';
 
 // Inner component to consume useSiteSettings context
@@ -28,6 +29,7 @@ const AppContent = () => {
       <SEO />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/project/:id" element={<ProjectDetails />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

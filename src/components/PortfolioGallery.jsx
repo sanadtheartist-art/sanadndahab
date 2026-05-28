@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import ProjectModal from './ProjectModal';
+import { Link } from 'react-router-dom';
 
 const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
   const [projects, setProjects] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [selectedProjectIndex, setSelectedProjectIndex] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "projects"), (snapshot) => {
@@ -153,10 +152,10 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
               }
 
               return (
-              <div 
+              <Link 
                 key={project.id} 
-                onClick={() => setSelectedProjectIndex(idx)}
-                className={`relative group overflow-hidden rounded-xl bg-surface cursor-pointer ${layoutClass}`}
+                to={`/project/${project.id}`}
+                className={`relative group overflow-hidden rounded-xl bg-surface block ${layoutClass}`}
               >
                 <div className="w-full h-full">
                   <img
@@ -188,21 +187,11 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
                     {[project.location, project.year].filter(Boolean).join(' • ')}
                   </p>
                 </div>
-              </div>
+              </Link>
               );
             })}
+          </AnimatePresence>
         </div>
-      )}
-
-      {selectedProjectIndex !== null && (
-        <ProjectModal 
-          project={filteredProjects[selectedProjectIndex]}
-          onClose={() => setSelectedProjectIndex(null)}
-          onPrev={() => setSelectedProjectIndex(prev => prev - 1)}
-          onNext={() => setSelectedProjectIndex(prev => prev + 1)}
-          hasPrev={selectedProjectIndex > 0}
-          hasNext={selectedProjectIndex < filteredProjects.length - 1}
-        />
       )}
     </section>
   );

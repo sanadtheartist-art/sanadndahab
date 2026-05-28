@@ -3,8 +3,6 @@ import { collection, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orde
 import { db, auth } from '../lib/firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 import AdminProjectModal from './AdminProjectModal';
-import AdminSections from '../components/AdminSections';
-import AdminSettings from '../components/AdminSettings';
 import AdminMessages from '../components/AdminMessages';
 import MediaLibrary from '../components/MediaLibrary';
 import { uploadToCloudinary } from '../lib/cloudinary';
@@ -262,11 +260,6 @@ const Admin = () => {
           <div className="nav-group">
             <div className="nav-group-label">Content</div>
             <button className={`nav-btn ${currentTab === 'media' ? 'active' : ''}`} onClick={() => setCurrentTab('media')}><span className="icon">▦</span> Media Library</button>
-            <button className={`nav-btn ${currentTab === 'identity' ? 'active' : ''}`} onClick={() => setCurrentTab('identity')}><span className="icon">◎</span> Site Identity</button>
-            <button className={`nav-btn ${currentTab === 'sections' ? 'active' : ''}`} onClick={() => setCurrentTab('sections')}><span className="icon">▤</span> Page Sections</button>
-            <button className={`nav-btn ${currentTab === 'about' ? 'active' : ''}`} onClick={() => setCurrentTab('about')}><span className="icon">○</span> About Page</button>
-            <button className={`nav-btn ${currentTab === 'gallery-settings' ? 'active' : ''}`} onClick={() => setCurrentTab('gallery-settings')}><span className="icon">◪</span> Gallery Layout</button>
-            <button className={`nav-btn ${currentTab === 'social' ? 'active' : ''}`} onClick={() => setCurrentTab('social')}><span className="icon">◈</span> Social & Links</button>
           </div>
 
           <div className="nav-group">
@@ -275,11 +268,6 @@ const Admin = () => {
             <button className={`nav-btn ${currentTab === 'portfolio' ? 'active' : ''}`} onClick={() => setCurrentTab('portfolio')}><span className="icon">☰</span> Manage Projects</button>
           </div>
 
-          <div className="nav-group">
-            <div className="nav-group-label">System</div>
-            <button className={`nav-btn ${currentTab === 'theme' ? 'active' : ''}`} onClick={() => setCurrentTab('theme')}><span className="icon">◐</span> Theme & Colors</button>
-            <button className={`nav-btn ${currentTab === 'seo' ? 'active' : ''}`} onClick={() => setCurrentTab('seo')}><span className="icon">⚲</span> SEO & Meta</button>
-          </div>
 
           <div className="sidebar-footer">
             <button className="preview-link" onClick={handleLogout} style={{background: 'rgba(255,255,255,0.05)', color: 'var(--dim)', boxShadow: 'none'}}>Sign Out</button>
@@ -293,13 +281,6 @@ const Admin = () => {
               {currentTab === 'media' && 'Media Library'}
               {currentTab === 'portfolio' && 'Manage Projects'}
               {currentTab === 'messages' && 'Inbox Messages'}
-              {currentTab === 'identity' && 'Site Identity'}
-              {currentTab === 'sections' && 'Page Sections'}
-              {currentTab === 'about' && 'About Page'}
-              {currentTab === 'gallery-settings' && 'Gallery Layout'}
-              {currentTab === 'social' && 'Social & Links'}
-              {currentTab === 'theme' && 'Theme & Colors'}
-              {currentTab === 'seo' && 'SEO & Meta'}
             </h2>
             <div className="topbar-actions">
               <span className="badge live">Signed in</span>
@@ -334,7 +315,6 @@ const Admin = () => {
                   <div style={{display:'flex', flexWrap:'wrap', gap:'10px'}}>
                     <button className="btn btn-primary" onClick={() => { setCurrentTab('portfolio'); openNewProject(); }}>+ New Project</button>
                     <button className="btn btn-ghost" onClick={() => setCurrentTab('messages')}>View Inbox</button>
-                    <button className="btn btn-ghost" onClick={() => setCurrentTab('identity')}>Edit Settings</button>
                     <a className="btn btn-ghost" href="/" target="_blank" rel="noopener noreferrer">Open Live Site</a>
                   </div>
                 </div>
@@ -412,17 +392,7 @@ const Admin = () => {
               </div>
             )}
 
-            {currentTab === 'sections' && (
-              <div className="panel active" style={{maxWidth: '1000px'}}>
-                <AdminSections />
-              </div>
-            )}
 
-            {['identity', 'about', 'gallery-settings', 'social', 'theme', 'seo'].includes(currentTab) && (
-              <div className="panel active" style={{maxWidth: '1000px'}}>
-                <AdminSettings currentTab={currentTab} />
-              </div>
-            )}
           </div>
         </div>
       </div>
