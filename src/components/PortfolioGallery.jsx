@@ -83,8 +83,8 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
     if (!url) return '';
     let u = url.trim();
     if (u.includes('cloudinary.com')) {
-      // f_auto, q_60 (lower quality), w_600
-      return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_60,w_600,c_limit/');
+      // f_auto, q_50 (very fast), w_600
+      return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_50,w_600,c_limit/');
     }
     if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
       let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
@@ -156,13 +156,13 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
               <div 
                 key={project.id} 
                 onClick={() => setSelectedProjectIndex(idx)}
-                className={`relative group overflow-hidden rounded-xl bg-surface cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/5 ${layoutClass}`}
+                className={`relative group overflow-hidden rounded-xl bg-surface cursor-pointer ${layoutClass}`}
               >
                 <div className="w-full h-full">
                   <img
                     src={getOptimizedThumbnailUrl(project.thumbnailUrl) || 'https://via.placeholder.com/600x800?text=No+Image'}
                     alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 img-fade"
+                    className="w-full h-full object-cover img-fade"
                     loading="lazy"
                     decoding="async"
                     onLoad={(e) => e.currentTarget.classList.add('loaded')}

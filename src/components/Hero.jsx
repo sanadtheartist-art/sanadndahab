@@ -22,6 +22,10 @@ const upgradeImageUrl = (url) => {
   if (!url) return '';
   let u = url.trim();
   if (u.startsWith('data:')) return u;
+  if (u.includes('cloudinary.com')) {
+    // Drop quality to 50 for max speed
+    return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_50,w_1200,c_limit/');
+  }
   if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
     let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
     if (!out.endsWith('=s0')) out += '=s0';
@@ -100,7 +104,7 @@ const HeroBackground = ({ settings }) => {
         return (
           <div 
             key={url + index} 
-            className={`absolute inset-0 transition-opacity duration-[1500ms] ease-in-out ${opacityClass} ${zIndexClass}`}
+            className={`absolute inset-0 ${opacityClass} ${zIndexClass}`}
           >
             {ytId ? (
               <div className="absolute inset-0 overflow-hidden pointer-events-none flex justify-center items-center">
@@ -166,10 +170,10 @@ const Hero = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background z-0 pointer-events-none" />
 
       {/* Decorative Orbs */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-accent/20 rounded-full blur-[100px] z-0 animate-pulse-slow pointer-events-none" aria-hidden="true" />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-accent2/20 rounded-full blur-[100px] z-0 animate-pulse-slow pointer-events-none" style={{ animationDelay: '2s' }} aria-hidden="true" />
+      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-accent/20 rounded-full blur-[100px] z-0 pointer-events-none" aria-hidden="true" />
+      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-accent2/20 rounded-full blur-[100px] z-0 pointer-events-none" style={{ animationDelay: '2s' }} aria-hidden="true" />
 
-      <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center animate-fade-up px-2">
+      <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center px-2">
         <p className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-4 md:mb-6" id="hero-eyebrow">
           {eyebrow}
         </p>
@@ -214,7 +218,7 @@ const Hero = () => {
         </div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 animate-bounce">
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50">
         <span className="text-[0.65rem] tracking-[0.2em] uppercase">Scroll</span>
         <span className="w-px h-8 bg-gradient-to-b from-white to-transparent" />
       </div>

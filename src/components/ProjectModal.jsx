@@ -9,8 +9,8 @@ const ProjectModal = ({ project, onClose, onPrev, onNext, hasPrev, hasNext }) =>
     let u = url.trim();
     if (u.startsWith('data:')) return u;
     if (u.includes('cloudinary.com')) {
-      // Lower quality (q_70) for modal images since they are larger, but we still want speed
-      return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_70,w_1200,c_limit/');
+      // Lower quality (q_60) for modal images since they are larger, but we still want speed
+      return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_60,w_1200,c_limit/');
     }
     if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
         let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
