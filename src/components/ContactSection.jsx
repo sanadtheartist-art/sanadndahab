@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useSiteSettings } from '../lib/SiteContext';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useIsMobile } from '../lib/useIsMobile';
 
 const ContactSection = ({ sectionId = 'contact' }) => {
   const { settings, loading } = useSiteSettings();
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState('idle');
+  const isMobile = useIsMobile();
 
   if (loading || !settings) return null;
 
@@ -136,7 +138,7 @@ const ContactSection = ({ sectionId = 'contact' }) => {
           onSubmit={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
             <div>
               <label style={{
                 fontFamily: 'var(--font-mono)',

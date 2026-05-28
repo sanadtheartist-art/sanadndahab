@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSiteSettings } from '../lib/SiteContext';
+import { useIsMobile } from '../lib/useIsMobile';
 
 function getPageSections(d) {
   if (d.pageSections && d.pageSections.length) {
@@ -80,6 +81,8 @@ const Hero = () => {
   const { settings, loading } = useSiteSettings();
   const titleRef = useRef(null);
 
+  const isMobile = useIsMobile();
+
   // Only use images (no YouTube iframes for speed)
   const images = !loading && settings
     ? Array.from(new Set([
@@ -138,8 +141,9 @@ const Hero = () => {
       <div style={{
         position: 'relative', zIndex: 10,
         maxWidth: '900px',
+        width: '100%',
         textAlign: 'center',
-        padding: '0 1.5rem',
+        padding: isMobile ? '0 1.25rem' : '0 1.5rem',
       }}>
         {/* Eyebrow */}
         <div style={{

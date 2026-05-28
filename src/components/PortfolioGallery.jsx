@@ -270,11 +270,12 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
         </p>
       ) : (
         <div style={{
-          columns: '280px 3',
-          columnGap: '1rem',
+          columns: 'auto',
+          columnWidth: 'min(300px, 100%)',
+          columnGap: '0.85rem',
         }}>
           {filtered.map((project, idx) => (
-            <div key={project.id} style={{ breakInside: 'avoid', marginBottom: '1rem' }}>
+            <div key={project.id} style={{ breakInside: 'avoid', marginBottom: '0.85rem' }}>
               <ProjectCard
                 project={project}
                 isFeatured={false}

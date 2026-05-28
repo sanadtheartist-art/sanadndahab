@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useSiteSettings } from '../lib/SiteContext';
+import { useIsMobile } from '../lib/useIsMobile';
 
 const upgradeImageUrl = (url) => {
   if (!url) return '';
@@ -19,6 +20,8 @@ const upgradeImageUrl = (url) => {
 const AboutSection = ({ sectionId = 'about' }) => {
   const { settings, loading } = useSiteSettings();
   const sectionRef = useRef(null);
+
+  const isMobile = useIsMobile();
 
   // Scroll-reveal
   useEffect(() => {
@@ -79,10 +82,10 @@ const AboutSection = ({ sectionId = 'about' }) => {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: img ? '1fr 1fr' : '1fr',
-        gap: 'clamp(2.5rem, 6vw, 5rem)',
+        gridTemplateColumns: img && !isMobile ? '1fr 1fr' : '1fr',
+        gap: isMobile ? '2.5rem' : 'clamp(2.5rem, 6vw, 5rem)',
         alignItems: 'center',
-      }} className="md:grid-cols-2 grid-cols-1">
+      }}>
 
         {/* Image column */}
         {img && (

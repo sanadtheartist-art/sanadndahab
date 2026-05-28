@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useSiteSettings } from '../lib/SiteContext';
+import { useIsMobile } from '../lib/useIsMobile';
 
 const upgradeImageUrl = (url) => {
   if (!url) return '';
@@ -22,6 +23,7 @@ const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { settings } = useSiteSettings();
+  const isMobile = useIsMobile();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [allProjects, setAllProjects] = useState([]);
@@ -184,16 +186,17 @@ const ProjectDetails = () => {
       </header>
 
       {/* Body */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
         {/* Sidebar */}
         <div style={{
-          width: 'min(320px, 100%)',
-          borderRight: '1px solid var(--border)',
-          padding: '2.5rem',
+          width: isMobile ? '100%' : 'min(320px, 33%)',
+          borderRight: isMobile ? 'none' : '1px solid var(--border)',
+          borderBottom: isMobile ? '1px solid var(--border)' : 'none',
+          padding: isMobile ? '1.75rem 1.25rem' : '2.5rem',
           background: 'var(--surface)',
           flexShrink: 0,
         }}>
-          <div style={{ position: 'sticky', top: '4rem' }}>
+          <div style={{ position: isMobile ? 'relative' : 'sticky', top: '4rem' }}>
             {meta && (
               <span style={{
                 display: 'block',
