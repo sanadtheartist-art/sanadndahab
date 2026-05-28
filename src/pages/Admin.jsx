@@ -7,6 +7,7 @@ import AdminSections from '../components/AdminSections';
 import AdminSettings from '../components/AdminSettings';
 import AdminMessages from '../components/AdminMessages';
 import MediaLibrary from '../components/MediaLibrary';
+import { uploadToCloudinary } from '../lib/cloudinary';
 import '../admin.css';
 
 const Admin = () => {
@@ -21,6 +22,7 @@ const Admin = () => {
   
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [syncingProjects, setSyncingProjects] = useState({});
   
   const [currentTab, setCurrentTab] = useState('dashboard'); // 'dashboard' | 'portfolio' | 'settings' | 'messages'
   const [editingProject, setEditingProject] = useState(null);
@@ -140,6 +142,60 @@ const Admin = () => {
   const handleModalSave = () => {
     setIsModalOpen(false);
     fetchData(); // refresh list
+  };
+
+  const quickSyncProject = async (p) => {
+    setSyncingProjects(prev => ({ ...prev, [p.id]: true }));
+    try {
+      const updates = {};
+      let needsUpdate = false;
+
+      const checkAndUpload = async (url) => {
+        if (!url || typeof url !== 'string') return url;
+        if (url.includes('cloudinary.com') || url.includes('youtube.com') || url.includes('youtu.be')) return url;
+        try {
+          return await uploadToCloudinary(url);
+        } catch (e) {
+          console.error("Failed to sync:", url, e);
+          return url;
+        }
+      };
+
+      if (p.thumbnailUrl) {
+        const newThumb = await checkAndUpload(p.thumbnailUrl);
+        if (newThumb !== p.thumbnailUrl) {
+          updates.thumbnailUrl = newThumb;
+          needsUpdate = true;
+        }
+      }
+
+      if (p.mediaUrls && p.mediaUrls.length > 0) {
+        const newMediaUrls = [];
+        for (const block of p.mediaUrls) {
+          if (block.type === 'media' && block.content) {
+            const newUrl = await checkAndUpload(block.content);
+            if (newUrl !== block.content) needsUpdate = true;
+            newMediaUrls.push({ ...block, content: newUrl });
+          } else {
+            newMediaUrls.push(block);
+          }
+        }
+        if (updates.mediaUrls || newMediaUrls.some((b, i) => b.content !== p.mediaUrls[i].content)) {
+          updates.mediaUrls = newMediaUrls;
+          needsUpdate = true;
+        }
+      }
+
+      if (needsUpdate) {
+        await updateDoc(doc(db, "projects", p.id), updates);
+        fetchData(); // refresh list
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Sync failed. See console.');
+    } finally {
+      setSyncingProjects(prev => ({ ...prev, [p.id]: false }));
+    }
   };
 
   const isProjectSynced = (p) => {
@@ -325,7 +381,12 @@ const Admin = () => {
                             <button className="btn btn-ghost btn-sm" onClick={() => moveProject(idx, 1)} disabled={idx === projects.length - 1}>↓ Down</button>
                           </div>
                         </div>
-                        <div className="project-actions">
+                        <div className="project-actions" style={{display:'flex', gap:'8px', alignItems:'center'}}>
+                          {!isProjectSynced(p) && (
+                            <button className="btn btn-outline btn-sm" onClick={() => quickSyncProject(p)} disabled={syncingProjects[p.id]} style={{borderColor: '#3b82f6', color: '#3b82f6'}}>
+                              {syncingProjects[p.id] ? 'Syncing...' : 'Sync Cloudinary'}
+                            </button>
+                          )}
                           <button className="btn btn-ghost btn-sm" onClick={() => openEditProject(p)}>Edit</button>
                           <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.id)}>Delete</button>
                         </div>
