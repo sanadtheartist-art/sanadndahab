@@ -142,6 +142,24 @@ const Admin = () => {
     fetchData(); // refresh list
   };
 
+  const isProjectSynced = (p) => {
+    const isUrlSynced = (url) => {
+      if (!url || typeof url !== 'string') return true;
+      return url.includes('cloudinary.com') || url.includes('youtube.com') || url.includes('youtu.be');
+    };
+
+    if (!isUrlSynced(p.thumbnailUrl)) return false;
+    
+    if (p.mediaUrls && Array.isArray(p.mediaUrls)) {
+      for (const block of p.mediaUrls) {
+        if (block.type === 'media' && !isUrlSynced(block.content)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
   if (loadingAuth) return <div className="admin-theme" style={{justifyContent: 'center', alignItems: 'center'}}>Loading...</div>;
 
   if (!user) {
@@ -296,6 +314,11 @@ const Admin = () => {
                               <span className="tag">Published</span>
                             )}
                             {p.category && <span className="tag">{p.category}</span>}
+                            {isProjectSynced(p) ? (
+                              <span className="tag" style={{background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', borderColor: 'rgba(59, 130, 246, 0.3)'}}>☁ Synced</span>
+                            ) : (
+                              <span className="tag" style={{background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.3)'}}>⚠️ Unsynced Media</span>
+                            )}
                           </div>
                           <div className="sort-btns" style={{display:'flex', gap:'8px', marginTop:'8px'}}>
                             <button className="btn btn-ghost btn-sm" onClick={() => moveProject(idx, -1)} disabled={idx === 0}>↑ Up</button>
