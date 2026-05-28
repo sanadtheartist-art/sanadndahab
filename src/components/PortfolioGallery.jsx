@@ -115,12 +115,29 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
         <div className={
           settings.galleryLayout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' :
           settings.galleryLayout === 'list' ? 'flex flex-col gap-8 max-w-4xl mx-auto' :
-          settings.galleryLayout === 'bento' ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[minmax(200px,auto)]' :
+          settings.galleryLayout?.startsWith('bento') ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[minmax(200px,auto)]' :
           settings.galleryLayout === 'carousel' ? 'flex overflow-x-auto gap-4 md:gap-6 pb-8 snap-x snap-mandatory' :
           'columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6'
         }>
           <AnimatePresence mode="popLayout">
-            {filteredProjects.map((project, idx) => (
+            {filteredProjects.map((project, idx) => {
+              let layoutClass = 'break-inside-avoid';
+              const layout = settings.galleryLayout || 'masonry';
+              
+              if (layout === 'grid') layoutClass = 'aspect-[4/3]';
+              else if (layout === 'list') layoutClass = 'w-full aspect-[16/9]';
+              else if (layout === 'carousel') layoutClass = 'flex-none w-[85vw] sm:w-[60vw] md:w-[45vw] lg:w-[35vw] aspect-[4/5] snap-center';
+              else if (layout === 'bento' || layout === 'bento-hero') {
+                layoutClass = (idx % 6 === 0) ? 'sm:col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto' : (idx % 6 === 3) ? 'sm:col-span-2 md:col-span-2 aspect-[2/1]' : 'aspect-square';
+              }
+              else if (layout === 'bento-editorial') {
+                layoutClass = (idx % 5 === 0) ? 'sm:col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto' : (idx % 5 === 1 || idx % 5 === 4) ? 'sm:col-span-2 md:col-span-2 aspect-[16/9]' : 'aspect-[4/5]';
+              }
+              else if (layout === 'bento-mosaic') {
+                layoutClass = (idx % 7 === 0) ? 'sm:col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto' : (idx % 7 === 4) ? 'sm:col-span-2 md:col-span-2 aspect-[2/1]' : 'aspect-square';
+              }
+
+              return (
               <motion.div 
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -128,13 +145,7 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
                 transition={{ duration: 0.2 }}
                 key={project.id} 
                 onClick={() => setSelectedProjectIndex(idx)}
-                className={`relative group overflow-hidden rounded-xl bg-surface cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/5 ${
-                  settings.galleryLayout === 'grid' ? 'aspect-[4/3]' : 
-                  settings.galleryLayout === 'list' ? 'w-full aspect-[16/9]' : 
-                  settings.galleryLayout === 'bento' ? (idx % 6 === 0 ? 'sm:col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto' : idx % 6 === 3 ? 'sm:col-span-2 md:col-span-2 aspect-[2/1]' : 'aspect-square') :
-                  settings.galleryLayout === 'carousel' ? 'flex-none w-[85vw] sm:w-[60vw] md:w-[45vw] lg:w-[35vw] aspect-[4/5] snap-center' :
-                  'break-inside-avoid'
-                }`}
+                className={`relative group overflow-hidden rounded-xl bg-surface cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/5 ${layoutClass}`}
               >
                 <div className="w-full h-full">
                   <img
@@ -167,7 +178,8 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
                   </p>
                 </div>
               </motion.div>
-            ))}
+              );
+            })}
           </AnimatePresence>
         </div>
       )}

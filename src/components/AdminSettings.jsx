@@ -287,7 +287,9 @@ const AdminSettings = ({ currentTab }) => {
                 <option value="masonry">Masonry (Pinterest-style)</option>
                 <option value="grid">Standard Grid (Cropped)</option>
                 <option value="list">Single Column List</option>
-                <option value="bento">Bento Grid (Dynamic Sizes)</option>
+                <option value="bento-hero">Bento Grid (Hero Centric)</option>
+                <option value="bento-editorial">Bento Grid (Editorial)</option>
+                <option value="bento-mosaic">Bento Grid (Mosaic)</option>
                 <option value="carousel">Horizontal Carousel (Side-scroll)</option>
               </select>
             </div>
