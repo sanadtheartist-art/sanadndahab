@@ -169,18 +169,18 @@ const Hero = () => {
       <div className="absolute top-1/4 -left-32 w-96 h-96 bg-accent/20 rounded-full blur-[100px] z-0 animate-pulse-slow pointer-events-none" aria-hidden="true" />
       <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-accent2/20 rounded-full blur-[100px] z-0 animate-pulse-slow pointer-events-none" style={{ animationDelay: '2s' }} aria-hidden="true" />
 
-      <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center animate-fade-up">
-        <p className="text-sm md:text-base font-semibold tracking-[0.2em] uppercase text-accent mb-6" id="hero-eyebrow">
+      <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center animate-fade-up px-2">
+        <p className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-4 md:mb-6" id="hero-eyebrow">
           {eyebrow}
         </p>
 
         <h1
-          className="font-display font-normal text-5xl md:text-7xl lg:text-8xl leading-[1.05] tracking-tight mb-8"
+          className="font-display font-normal text-4xl md:text-7xl lg:text-8xl leading-[1.1] tracking-tight mb-6 md:mb-8"
           id="hero-title"
           dangerouslySetInnerHTML={{ __html: title }}
         />
 
-        <p className="text-lg md:text-xl text-dim max-w-xl mx-auto mb-10 leading-relaxed" id="hero-sub">
+        <p className="text-base md:text-xl text-dim max-w-xl mx-auto mb-8 md:mb-10 leading-relaxed" id="hero-sub">
           {sub}
         </p>
 

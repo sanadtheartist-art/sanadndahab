@@ -33,7 +33,7 @@ const AboutSection = ({ sectionId = 'about' }) => {
   };
 
   return (
-    <section id={sectionId} className="max-w-7xl mx-auto px-4 md:px-10 py-24 min-h-[50vh]">
+    <section id={sectionId} className="max-w-7xl mx-auto px-4 md:px-10 py-16 md:py-24 min-h-[50vh]">
       <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
         {img && (
           <div className="w-full">
@@ -47,11 +47,11 @@ const AboutSection = ({ sectionId = 'about' }) => {
         )}
         
         <div className="flex flex-col justify-center animate-fade-up">
-          <p className="text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-4">{aboutLabel}</p>
-          <h2 className="font-display text-4xl md:text-5xl mb-6">{aboutTitle}</h2>
+          <p className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-3 md:mb-4">{aboutLabel}</p>
+          <h2 className="font-display text-3xl md:text-5xl mb-4 md:mb-6">{aboutTitle}</h2>
           
           {aboutLead && (
-            <p className="text-xl md:text-2xl leading-relaxed mb-8 text-white">
+            <p className="text-lg md:text-2xl leading-relaxed mb-6 md:mb-8 text-white">
               {aboutLead}
             </p>
           )}

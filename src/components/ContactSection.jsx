@@ -43,12 +43,12 @@ const ContactSection = ({ sectionId = 'contact' }) => {
   };
 
   return (
-    <section id={sectionId} className="max-w-4xl mx-auto px-4 md:px-10 py-32 text-center animate-fade-up">
-      <p className="text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-4">Contact</p>
-      <h2 className="font-display text-4xl md:text-6xl mb-6">{contactTitle}</h2>
+    <section id={sectionId} className="max-w-4xl mx-auto px-4 md:px-10 py-16 md:py-24 text-center animate-fade-up">
+      <p className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-3 md:mb-4">Contact</p>
+      <h2 className="font-display text-3xl md:text-6xl mb-4 md:mb-6">{contactTitle}</h2>
       
       {contactText && (
-        <p className="text-lg md:text-xl text-dim max-w-2xl mx-auto mb-10">
+        <p className="text-base md:text-xl text-dim max-w-2xl mx-auto mb-8 md:mb-10 px-2">
           {contactText}
         </p>
       )}

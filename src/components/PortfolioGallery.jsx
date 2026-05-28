@@ -77,12 +77,12 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
   }
 
   return (
-    <section id={sectionId} className="max-w-7xl mx-auto px-4 md:px-10 py-24 min-h-[50vh]">
-      <div className="text-center mb-16 animate-fade-up">
-        <p className="text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-4">{settings.worksLabel || 'Portfolio'}</p>
-        <h2 className="font-display text-4xl md:text-6xl mb-4">{settings.worksTitle || 'Selected Works'}</h2>
+    <section id={sectionId} className="max-w-7xl mx-auto px-4 md:px-10 py-16 md:py-24 min-h-[50vh]">
+      <div className="text-center mb-12 md:mb-16 animate-fade-up">
+        <p className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-3 md:mb-4">{settings.worksLabel || 'Portfolio'}</p>
+        <h2 className="font-display text-3xl md:text-6xl mb-3 md:mb-4">{settings.worksTitle || 'Selected Works'}</h2>
         {settings.worksSubtitle && (
-          <p className="text-lg text-dim mt-4 max-w-2xl mx-auto">{settings.worksSubtitle}</p>
+          <p className="text-base md:text-lg text-dim mt-4 max-w-2xl mx-auto px-2">{settings.worksSubtitle}</p>
         )}
       </div>
 
