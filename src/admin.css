@@ -488,10 +488,6 @@
             transition: transform 0.22s, box-shadow 0.22s, background 0.22s, border-color 0.22s, color 0.22s;
         }
 
-        .btn:hover {
-            
-        }
-
         .btn-primary {
             background: var(--accent);
             color: #1a1a1a;
