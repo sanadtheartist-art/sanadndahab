@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useSiteSettings } from '../lib/SiteContext';
 
-const SECTION_LABELS = { about: 'About', works: 'Works', contact: 'Contact', stats: 'Stats' };
+const SECTION_LABELS = { about: 'About', works: 'Works', contact: 'Contact' };
 
 function getNavLinks(d) {
   if (d.pageSections && d.pageSections.length) {
     return [...d.pageSections]
       .map((s, i) => ({ ...s, order: s.order ?? i }))
       .sort((a, b) => a.order - b.order)
-      .filter(s => s.enabled !== false && s.showInNav !== false && s.type !== 'custom' || (s.enabled !== false && s.showInNav === true))
       .filter(s => s.showInNav !== false && s.enabled !== false)
       .map(s => ({ id: s.id, label: s.navLabel || SECTION_LABELS[s.type] || s.id }));
   }
-  // Legacy fallback
   const nav = d.navVisibility || {};
   const links = [];
   if (nav.about !== false) links.push({ id: 'about', label: d.aboutLabel || 'About' });
@@ -26,88 +24,205 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const artistName = settings?.artistName || 'Artist';
+  const artistName = settings?.artistName || 'SANADNDAHAB';
   const navLinks = settings ? getNavLinks(settings) : [];
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
+    const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const handleLinkClick = () => setMobileOpen(false);
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] px-4 pt-4 md:px-10 md:pt-4">
-      <nav
-        id="main-nav"
-        className={`flex justify-between items-center max-w-[1180px] mx-auto h-16 px-4 md:px-6 backdrop-blur-xl border rounded-full transition-all duration-300 ${
-          scrolled
-            ? 'bg-black/90 border-white/12 shadow-[0_18px_54px_rgba(0,0,0,0.32)]'
-            : 'bg-black/66 border-white/8'
-        }`}
+    <>
+      <header
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, padding: '1rem 1.5rem' }}
+        aria-label="Site header"
       >
-        {/* Logo */}
-        <a
-          href="/"
-          id="nav-logo"
-          aria-label={`${artistName} home`}
-          className="font-display text-[1.35rem] font-semibold text-white no-underline truncate flex-1"
+        <nav
+          id="main-nav"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            maxWidth: '1200px',
+            margin: '0 auto',
+            height: '3.25rem',
+            padding: '0 1.25rem',
+            borderRadius: '999px',
+            border: '1px solid',
+            transition: 'background 0.35s, border-color 0.35s, box-shadow 0.35s',
+            background: scrolled ? 'rgba(7,7,10,0.88)' : 'rgba(7,7,10,0.55)',
+            borderColor: scrolled ? 'rgba(196,165,116,0.18)' : 'rgba(255,255,255,0.07)',
+            boxShadow: scrolled ? '0 8px 40px rgba(0,0,0,0.5)' : 'none',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+          }}
         >
-          {artistName}
-        </a>
+          {/* Logo */}
+          <a
+            href="/"
+            id="nav-logo"
+            aria-label={`${artistName} home`}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.25rem',
+              fontWeight: 400,
+              letterSpacing: '0.06em',
+              color: 'var(--text)',
+              textDecoration: 'none',
+              flexShrink: 0,
+            }}
+          >
+            {artistName}
+          </a>
 
-        {/* Desktop nav links */}
-        <div id="nav-links" className="hidden md:flex items-center gap-1">
-          {navLinks.map((link, i) => {
-            const isLast = i === navLinks.length - 1;
-            return (
-              <a
-                key={link.id}
-                href={`#${link.id}`}
-                data-section-id={link.id}
-                className={`px-4 py-2 text-[0.8rem] font-medium tracking-[0.12em] uppercase rounded-full transition-all duration-300 ${
-                  isLast
-                    ? 'bg-accent text-black px-5'
-                    : 'text-dim hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {link.label}
-              </a>
-            );
-          })}
-        </div>
+          {/* Desktop links */}
+          <div id="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+            className="hidden md:flex">
+            {navLinks.map((link, i) => {
+              const isLast = i === navLinks.length - 1;
+              return isLast ? (
+                <a
+                  key={link.id}
+                  href={`#${link.id}`}
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.7rem',
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    padding: '0.45rem 1rem',
+                    borderRadius: '999px',
+                    background: 'var(--accent)',
+                    color: '#000',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    transition: 'background 0.2s',
+                  }}
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <a
+                  key={link.id}
+                  href={`#${link.id}`}
+                  data-section-id={link.id}
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.7rem',
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: '999px',
+                    color: 'var(--dim)',
+                    textDecoration: 'none',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--dim)'}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
+          </div>
 
-        {/* Mobile hamburger */}
-        <button
-          id="menu-toggle"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen(o => !o)}
-          className="md:hidden flex flex-col justify-center items-center gap-[5px] w-10 h-10 bg-transparent border-none cursor-pointer ml-2"
-        >
-          <span className={`block w-[22px] h-[1.5px] bg-white transition-all duration-300 ${mobileOpen ? 'rotate-45 translate-y-[6.5px]' : ''}`} />
-          <span className={`block w-[22px] h-[1.5px] bg-white transition-all duration-300 ${mobileOpen ? 'opacity-0' : ''}`} />
-          <span className={`block w-[22px] h-[1.5px] bg-white transition-all duration-300 ${mobileOpen ? '-rotate-45 -translate-y-[6.5px]' : ''}`} />
-        </button>
-      </nav>
+          {/* Hamburger */}
+          <button
+            id="menu-toggle"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen(o => !o)}
+            className="md:hidden"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span style={{
+              display: 'block', width: 20, height: 1.5,
+              background: 'var(--text)',
+              transition: 'transform 0.3s, opacity 0.3s',
+              transform: mobileOpen ? 'rotate(45deg) translate(4.5px, 4.5px)' : 'none',
+            }} />
+            <span style={{
+              display: 'block', width: 20, height: 1.5,
+              background: 'var(--text)',
+              transition: 'opacity 0.3s',
+              opacity: mobileOpen ? 0 : 1,
+            }} />
+            <span style={{
+              display: 'block', width: 20, height: 1.5,
+              background: 'var(--text)',
+              transition: 'transform 0.3s, opacity 0.3s',
+              transform: mobileOpen ? 'rotate(-45deg) translate(4.5px, -4.5px)' : 'none',
+            }} />
+          </button>
+        </nav>
+      </header>
 
-      {/* Mobile menu drawer */}
+      {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="md:hidden mt-2 mx-4 rounded-2xl bg-black/90 backdrop-blur-xl border border-white/10 py-4 flex flex-col">
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 190,
+            background: 'rgba(7,7,10,0.97)',
+            backdropFilter: 'blur(20px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.25rem',
+          }}
+        >
           {navLinks.map(link => (
             <a
               key={link.id}
               href={`#${link.id}`}
-              onClick={handleLinkClick}
-              className="px-6 py-3 text-sm font-medium tracking-widest uppercase text-dim hover:text-white transition-colors"
+              onClick={() => setMobileOpen(false)}
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 'clamp(2.5rem, 8vw, 4rem)',
+                fontWeight: 400,
+                color: 'var(--text)',
+                textDecoration: 'none',
+                letterSpacing: '0.04em',
+                padding: '0.35rem 0',
+                transition: 'color 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text)'}
             >
               {link.label}
             </a>
           ))}
+          <div style={{
+            marginTop: '3rem',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.65rem',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: 'var(--dim)',
+          }}>
+            DAHAB · SINAI · EGYPT
+          </div>
         </div>
       )}
-    </header>
+    </>
   );
 };
 

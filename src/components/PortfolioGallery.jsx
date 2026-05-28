@@ -1,196 +1,290 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+
+const getThumb = (url) => {
+  if (!url) return '';
+  let u = url.trim();
+  if (u.includes('cloudinary.com')) {
+    return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_50,w_600,c_limit/');
+  }
+  if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
+    let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
+    return out.endsWith('=s600') ? out : out + '=s600';
+  }
+  return u;
+};
+
+// A single gallery card
+const ProjectCard = ({ project, isFeatured }) => {
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { el.classList.add('visible'); obs.disconnect(); } },
+      { threshold: 0.08 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const meta = [project.location, project.year].filter(Boolean).join(' · ');
+
+  return (
+    <Link
+      ref={cardRef}
+      to={`/project/${project.id}`}
+      className="reveal"
+      style={{
+        display: 'block',
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: '4px',
+        background: 'var(--surface)',
+        textDecoration: 'none',
+        ...(isFeatured ? { gridColumn: 'span 2' } : {}),
+      }}
+    >
+      {/* Image */}
+      <div style={{
+        overflow: 'hidden',
+        aspectRatio: isFeatured ? '16/7' : '4/5',
+        width: '100%',
+      }}>
+        <img
+          src={getThumb(project.thumbnailUrl)}
+          alt={project.title}
+          loading="lazy"
+          decoding="async"
+          className="img-fade"
+          onLoad={e => e.currentTarget.classList.add('loaded')}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transition: 'transform 0.7s cubic-bezier(0.16,1,0.3,1)',
+            display: 'block',
+          }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        />
+      </div>
+
+      {/* Hover overlay */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(to top, rgba(7,7,10,0.92) 0%, rgba(7,7,10,0.4) 55%, transparent 100%)',
+        opacity: 0,
+        transition: 'opacity 0.4s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+        padding: '1.5rem',
+      }}
+        onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+        onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+      >
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+          {project.featured && (
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.58rem',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              background: 'var(--accent)',
+              color: '#000',
+              padding: '3px 8px',
+              borderRadius: '2px',
+              fontWeight: 700,
+            }}>Featured</span>
+          )}
+          {project.category && (
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.58rem',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              border: '1px solid rgba(196,165,116,0.3)',
+              padding: '3px 8px',
+              borderRadius: '2px',
+              background: 'rgba(7,7,10,0.5)',
+              backdropFilter: 'blur(4px)',
+            }}>{project.category}</span>
+          )}
+        </div>
+        <h3 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: isFeatured ? '2rem' : '1.4rem',
+          fontWeight: 400,
+          color: 'var(--text)',
+          marginBottom: '4px',
+          lineHeight: 1.2,
+        }}>{project.title}</h3>
+        {meta && (
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.62rem',
+            letterSpacing: '0.14em',
+            color: 'rgba(245,240,232,0.55)',
+            textTransform: 'uppercase',
+          }}>{meta}</p>
+        )}
+      </div>
+
+      {/* Always-visible minimal label (bottom) */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        padding: '1.25rem 1rem 0.9rem',
+        background: 'linear-gradient(to top, rgba(7,7,10,0.8), transparent)',
+        pointerEvents: 'none',
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: '0.88rem',
+          fontWeight: 500,
+          color: 'var(--text)',
+          margin: 0,
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+        }}>{project.title}</p>
+      </div>
+    </Link>
+  );
+};
 
 const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
   const [projects, setProjects] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const sectionRef = useRef(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "projects"), (snapshot) => {
+    const unsub = onSnapshot(collection(db, 'projects'), (snap) => {
       const items = [];
       const cats = new Set();
-      
-      snapshot.forEach((doc) => {
+      snap.forEach(doc => {
         const data = doc.data();
         if (data.status !== 'draft') {
           items.push({ id: doc.id, ...data });
           if (data.category) cats.add(data.category);
         }
       });
-      
-      // Sort based on featured, sortOrder and createdAt
       items.sort((a, b) => {
         if (a.featured && !b.featured) return -1;
         if (!a.featured && b.featured) return 1;
-        
-        const ao = a.sortOrder ?? 99999;
-        const bo = b.sortOrder ?? 99999;
+        const ao = a.sortOrder ?? 99999, bo = b.sortOrder ?? 99999;
         if (ao !== bo) return ao - bo;
-        const at = a.createdAt?.seconds ?? 0;
-        const bt = b.createdAt?.seconds ?? 0;
-        return bt - at;
+        return (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0);
       });
-
       setProjects(items);
       setCategories([...cats]);
       setLoading(false);
-    }, (err) => {
-      console.error("Error loading portfolio:", err);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }, err => { console.error(err); setLoading(false); });
+    return () => unsub();
   }, []);
 
-  const filteredProjects = activeFilter === 'all' 
-    ? projects 
-    : projects.filter(p => p.category === activeFilter);
+  const filtered = activeFilter === 'all' ? projects : projects.filter(p => p.category === activeFilter);
 
-  // Upgrade image URL logic
-  const upgradeImageUrl = (url) => {
-    if (!url) return '';
-    let u = url.trim();
-    if (u.startsWith('data:')) return u;
-    if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
-        let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
-        if (!out.endsWith('=s0')) out += '=s0';
-        return out;
-    }
-    return u;
-  };
-
-  if (loading) {
-    return (
-      <section id={sectionId} className="max-w-7xl mx-auto px-4 md:px-10 py-20 flex flex-col items-center">
-        <p className="text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-4">{settings.worksLabel || 'Portfolio'}</p>
-        <h2 className="font-display text-4xl md:text-5xl mb-12">{settings.worksTitle || 'Selected Works'}</h2>
-        <div className="flex gap-4 animate-pulse">
-           <div className="w-64 h-96 bg-white/5 rounded-lg"></div>
-           <div className="w-64 h-96 bg-white/5 rounded-lg"></div>
-           <div className="w-64 h-96 bg-white/5 rounded-lg"></div>
-        </div>
-      </section>
-    );
-  }
-
-  const getOptimizedThumbnailUrl = (url) => {
-    if (!url) return '';
-    let u = url.trim();
-    if (u.includes('cloudinary.com')) {
-      // f_auto, q_50 (very fast), w_600
-      return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_50,w_600,c_limit/');
-    }
-    if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
-      let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
-      if (!out.endsWith('=s600')) out += '=s600';
-      return out;
-    }
-    return u;
-  };
+  const Skeleton = () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1rem', marginTop: '3rem' }}>
+      {[1,2,3,4,5,6].map(i => (
+        <div key={i} className="shimmer" style={{ aspectRatio: '4/5', borderRadius: '4px' }} />
+      ))}
+    </div>
+  );
 
   return (
-    <section id={sectionId} className="max-w-7xl mx-auto px-4 md:px-10 py-16 md:py-24 min-h-[50vh]">
-      <div className="text-center mb-12 md:mb-16 animate-fade-up">
-        <p className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-3 md:mb-4">{settings.worksLabel || 'Portfolio'}</p>
-        <h2 className="font-display text-3xl md:text-6xl mb-3 md:mb-4">{settings.worksTitle || 'Selected Works'}</h2>
+    <section
+      id={sectionId}
+      ref={sectionRef}
+      style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: 'clamp(4rem, 8vw, 7rem) 1.5rem',
+      }}
+    >
+      {/* Header */}
+      <div style={{ marginBottom: '3rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div style={{ width: '2rem', height: '1px', background: 'var(--accent)' }} />
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.62rem',
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: 'var(--accent)',
+          }}>{settings.worksLabel || 'Portfolio'}</span>
+        </div>
+        <h2 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+          fontWeight: 300,
+          lineHeight: 1.1,
+          color: 'var(--text)',
+          maxWidth: '600px',
+        }}>{settings.worksTitle || 'Selected Works'}</h2>
         {settings.worksSubtitle && (
-          <p className="text-base md:text-lg text-dim mt-4 max-w-2xl mx-auto px-2">{settings.worksSubtitle}</p>
+          <p style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '1rem',
+            color: 'var(--dim)',
+            marginTop: '1rem',
+            maxWidth: '500px',
+          }}>{settings.worksSubtitle}</p>
         )}
       </div>
 
+      {/* Filter pills */}
       {categories.length > 1 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-12">
-          <button 
-            onClick={() => setActiveFilter('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeFilter === 'all' ? 'bg-accent text-black' : 'bg-white/5 hover:bg-white/10'}`}
-          >
-            All
-          </button>
-          {categories.map(cat => (
-            <button 
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2.5rem' }}>
+          {['all', ...categories].map(cat => (
+            <button
               key={cat}
               onClick={() => setActiveFilter(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeFilter === cat ? 'bg-accent text-black' : 'bg-white/5 hover:bg-white/10'}`}
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.62rem',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                padding: '0.45rem 1rem',
+                borderRadius: '2px',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background 0.2s, color 0.2s',
+                background: activeFilter === cat ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+                color: activeFilter === cat ? '#000' : 'var(--dim)',
+                fontWeight: activeFilter === cat ? 700 : 400,
+              }}
             >
-              {cat}
+              {cat === 'all' ? 'All' : cat}
             </button>
           ))}
         </div>
       )}
 
-      {filteredProjects.length === 0 ? (
-        <p className="text-center text-dim">No works found in this category.</p>
+      {loading ? <Skeleton /> : filtered.length === 0 ? (
+        <p style={{ color: 'var(--dim)', fontFamily: 'var(--font-body)', textAlign: 'center', padding: '4rem 0' }}>
+          No works found.
+        </p>
       ) : (
-        <div className={
-          settings.galleryLayout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' :
-          settings.galleryLayout === 'list' ? 'flex flex-col gap-8 max-w-4xl mx-auto' :
-          settings.galleryLayout?.startsWith('bento') ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[minmax(200px,auto)]' :
-          settings.galleryLayout === 'carousel' ? 'flex overflow-x-auto gap-4 md:gap-6 pb-8 snap-x snap-mandatory' :
-          'columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6'
-        }>
-          <AnimatePresence mode="popLayout">
-            {filteredProjects.map((project, idx) => {
-              let layoutClass = 'break-inside-avoid';
-              const layout = settings.galleryLayout || 'masonry';
-              
-              if (layout === 'grid') layoutClass = 'aspect-[4/3]';
-              else if (layout === 'list') layoutClass = 'w-full aspect-[16/9]';
-              else if (layout === 'carousel') layoutClass = 'flex-none w-[85vw] sm:w-[60vw] md:w-[45vw] lg:w-[35vw] aspect-[4/5] snap-center';
-              else if (layout === 'bento' || layout === 'bento-hero') {
-                layoutClass = (idx % 6 === 0) ? 'sm:col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto' : (idx % 6 === 3) ? 'sm:col-span-2 md:col-span-2 aspect-[2/1]' : 'aspect-square';
-              }
-              else if (layout === 'bento-editorial') {
-                layoutClass = (idx % 5 === 0) ? 'sm:col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto' : (idx % 5 === 1 || idx % 5 === 4) ? 'sm:col-span-2 md:col-span-2 aspect-[16/9]' : 'aspect-[4/5]';
-              }
-              else if (layout === 'bento-mosaic') {
-                layoutClass = (idx % 7 === 0) ? 'sm:col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto' : (idx % 7 === 4) ? 'sm:col-span-2 md:col-span-2 aspect-[2/1]' : 'aspect-square';
-              }
-
-              return (
-              <Link 
-                key={project.id} 
-                to={`/project/${project.id}`}
-                className={`relative group overflow-hidden rounded-xl bg-surface block ${layoutClass}`}
-              >
-                <div className="w-full h-full">
-                  <img
-                    src={getOptimizedThumbnailUrl(project.thumbnailUrl) || 'https://via.placeholder.com/600x800?text=No+Image'}
-                    alt={project.title}
-                    className="w-full h-full object-cover img-fade"
-                    loading="lazy"
-                    decoding="async"
-                    onLoad={(e) => e.currentTarget.classList.add('loaded')}
-                    srcSet={/googleusercontent\.com|ggpht\.com/i.test(project.thumbnailUrl || '') ? [360,640,900,1200].map(w => `${(project.thumbnailUrl||'').replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '')}=s${w} ${w}w`).join(', ') : undefined}
-                    sizes="(max-width: 1024px) 100vw, 33vw"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                  <div style={{display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'8px'}}>
-                    {project.featured && (
-                      <span className="text-xs tracking-wider uppercase text-black mb-2 font-bold bg-accent w-fit px-2 py-1 rounded shadow-lg">
-                        Featured
-                      </span>
-                    )}
-                    {project.category && (
-                      <span className="text-xs tracking-wider uppercase text-accent mb-2 font-medium bg-black/50 w-fit px-2 py-1 rounded backdrop-blur-md border border-white/10">
-                        {project.category}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-2xl font-display text-white mb-1 drop-shadow-md">{project.title}</h3>
-                  <p className="text-sm text-white/80">
-                    {[project.location, project.year].filter(Boolean).join(' • ')}
-                  </p>
-                </div>
-              </Link>
-              );
-            })}
-          </AnimatePresence>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
+          gap: '1rem',
+        }}>
+          {filtered.map((project, idx) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              isFeatured={project.featured && idx === 0}
+            />
+          ))}
         </div>
       )}
     </section>

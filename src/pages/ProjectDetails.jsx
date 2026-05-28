@@ -4,6 +4,20 @@ import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useSiteSettings } from '../lib/SiteContext';
 
+const upgradeImageUrl = (url) => {
+  if (!url) return '';
+  let u = url.trim();
+  if (u.startsWith('data:')) return u;
+  if (u.includes('cloudinary.com')) {
+    return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_65,w_1200,c_limit/');
+  }
+  if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
+    let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
+    return out.endsWith('=s0') ? out : out + '=s0';
+  }
+  return u;
+};
+
 const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -13,211 +27,247 @@ const ProjectDetails = () => {
   const [allProjects, setAllProjects] = useState([]);
 
   useEffect(() => {
-    const fetchProjectAndOthers = async () => {
+    const fetch = async () => {
       setLoading(true);
       try {
-        // Fetch specific project
-        const docRef = doc(db, 'projects', id);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const p = docSnap.data();
-          setProject({ id: docSnap.id, ...p });
-          
-          // Update Document Title for SEO
-          document.title = `${settings?.artistName || 'Sanad'} | ${p.title}`;
-          
-          // Update Meta Description
-          let metaDesc = document.querySelector('meta[name="description"]');
-          if (!metaDesc) {
-            metaDesc = document.createElement('meta');
-            metaDesc.name = 'description';
-            document.head.appendChild(metaDesc);
-          }
-          metaDesc.content = p.description || `${p.title} - A mural project by ${settings?.artistName || 'Sanad'}.`;
-        } else {
-          navigate('/404');
-        }
+        const snap = await getDoc(doc(db, 'projects', id));
+        if (snap.exists()) {
+          const p = snap.data();
+          setProject({ id: snap.id, ...p });
+          document.title = `${settings?.artistName || 'SANADNDAHAB'} | ${p.title}`;
+          let meta = document.querySelector('meta[name="description"]');
+          if (!meta) { meta = document.createElement('meta'); meta.name = 'description'; document.head.appendChild(meta); }
+          meta.content = p.description || `${p.title} — a mural by ${settings?.artistName || 'SANADNDAHAB'}.`;
+        } else { navigate('/'); }
 
-        // Fetch all published projects to determine prev/next
-        const querySnapshot = await getDocs(collection(db, 'projects'));
+        const allSnap = await getDocs(collection(db, 'projects'));
         const items = [];
-        querySnapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.status !== 'draft') {
-            items.push({ id: doc.id, ...data });
-          }
-        });
-        
-        // Sort identically to PortfolioGallery
+        allSnap.forEach(d => { const data = d.data(); if (data.status !== 'draft') items.push({ id: d.id, ...data }); });
         items.sort((a, b) => {
-          const orderA = a.sortOrder !== undefined ? a.sortOrder : 9999;
-          const orderB = b.sortOrder !== undefined ? b.sortOrder : 9999;
-          if (orderA !== orderB) return orderA - orderB;
+          const ao = a.sortOrder ?? 9999, bo = b.sortOrder ?? 9999;
+          if (ao !== bo) return ao - bo;
           return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
         });
-        
         setAllProjects(items);
-        
-      } catch (err) {
-        console.error("Error fetching project:", err);
-      } finally {
-        setLoading(false);
-      }
+      } catch (e) { console.error(e); } finally { setLoading(false); }
     };
-
-    fetchProjectAndOthers();
+    fetch();
   }, [id, navigate, settings]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-white">
-        <div className="relative flex items-center justify-center w-24 h-24 mb-6">
-          <div className="absolute inset-0 border-2 border-white/10 rounded-full"></div>
-          <div className="absolute inset-0 border-2 border-accent rounded-full border-t-transparent animate-spin"></div>
-        </div>
-        <p className="text-sm tracking-[0.2em] uppercase text-dim animate-pulse">Loading Project</p>
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '40px', height: '40px', border: '1px solid var(--border)', borderTop: '1px solid var(--accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--dim)', marginTop: '1.5rem' }}>Loading</p>
       </div>
     );
   }
 
   if (!project) return null;
 
-  // Determine Prev / Next
-  const currentIndex = allProjects.findIndex(p => p.id === id);
-  const prevProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
-  const nextProject = currentIndex >= 0 && currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
+  const currentIdx = allProjects.findIndex(p => p.id === id);
+  const prevProject = currentIdx > 0 ? allProjects[currentIdx - 1] : null;
+  const nextProject = currentIdx >= 0 && currentIdx < allProjects.length - 1 ? allProjects[currentIdx + 1] : null;
 
-  // Image Upgrade Logic
-  const upgradeImageUrl = (url) => {
-    if (!url) return '';
-    let u = url.trim();
-    if (u.startsWith('data:')) return u;
-    if (u.includes('cloudinary.com')) {
-      return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_60,w_1200,c_limit/');
-    }
-    if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
-        let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
-        if (!out.endsWith('=s0')) out += '=s0';
-        return out;
-    }
-    return u;
-  };
+  const meta = [project.location, project.year, project.category].filter(Boolean).join(' · ');
 
-  const meta = [project.location, project.year, project.category].filter(Boolean).join(' • ');
-
-  const renderMediaBlock = (block, idx, isFirst) => {
+  const renderBlock = (block, idx, isFirst) => {
     if (typeof block === 'string') {
       if (!block.trim()) return null;
-      return <img key={idx} src={upgradeImageUrl(block.trim())} alt={project.title} className="w-full rounded-lg mb-8" loading={isFirst ? "eager" : "lazy"} />;
+      return (
+        <img key={idx} src={upgradeImageUrl(block.trim())} alt={project.title}
+          className="img-fade" onLoad={e => e.currentTarget.classList.add('loaded')}
+          loading={isFirst ? 'eager' : 'lazy'} decoding="async"
+          style={{ width: '100%', borderRadius: '2px', display: 'block', marginBottom: '1rem' }} />
+      );
     }
-    if (block?.type === 'media') {
-      if (!block.content?.trim()) return null;
-      return <img key={idx} src={upgradeImageUrl(block.content.trim())} alt={project.title} className="w-full rounded-lg mb-8" loading={isFirst ? "eager" : "lazy"} />;
+    if (block?.type === 'media' && block.content?.trim()) {
+      return (
+        <img key={idx} src={upgradeImageUrl(block.content.trim())} alt={project.title}
+          className="img-fade" onLoad={e => e.currentTarget.classList.add('loaded')}
+          loading={isFirst ? 'eager' : 'lazy'} decoding="async"
+          style={{ width: '100%', borderRadius: '2px', display: 'block', marginBottom: '1rem' }} />
+      );
     }
-    if (block?.type === 'text') {
-      if (!block.content?.trim()) return null;
-      return <div key={idx} className="text-dim text-lg leading-relaxed my-8" dangerouslySetInnerHTML={{ __html: block.content.replace(/\n/g, '<br>') }} />;
+    if (block?.type === 'text' && block.content?.trim()) {
+      return (
+        <div key={idx}
+          style={{ fontFamily: 'var(--font-body)', fontSize: '1rem', lineHeight: 1.8, color: 'var(--dim)', margin: '2rem 0' }}
+          dangerouslySetInnerHTML={{ __html: block.content.replace(/\n/g, '<br>') }}
+        />
+      );
     }
-    if (block?.type === 'embed') {
-      if (!block.content?.trim()) return null;
-      let embedCode = block.content;
-      if (embedCode.includes('youtube.com/embed/') || embedCode.includes('youtu.be/')) {
-        embedCode = embedCode.replace(/<iframe\s/i, '<iframe style="width: 100%; aspect-ratio: 16/9; display: block; margin: 0 auto;" ');
-        embedCode = embedCode.replace(/src=["']([^"']+)["']/, (match, urlStr) => {
-          try {
-            const u = new URL(urlStr.startsWith('http') ? urlStr : 'https:' + urlStr);
-            u.searchParams.set('autoplay', '1');
-            u.searchParams.set('mute', '1');
-            u.searchParams.set('controls', '0');
-            u.searchParams.set('playsinline', '1');
-            return `src="${u.toString()}"`;
-          } catch (e) { return match; }
-        });
+    if (block?.type === 'embed' && block.content?.trim()) {
+      let code = block.content;
+      if (code.includes('youtube.com/embed/') || code.includes('youtu.be/')) {
+        code = code.replace(/<iframe\s/i, '<iframe style="width:100%;aspect-ratio:16/9;display:block;" ');
       }
-      return <div key={idx} className="my-8 w-full rounded-lg overflow-hidden flex justify-center" dangerouslySetInnerHTML={{ __html: embedCode }} />;
+      return <div key={idx} style={{ margin: '2rem 0', overflow: 'hidden', borderRadius: '2px' }} dangerouslySetInnerHTML={{ __html: code }} />;
     }
     return null;
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col relative">
-      <header className="sticky top-0 left-0 right-0 z-[250] px-4 pt-4 md:px-10 md:pt-4 select-none bg-black/80 backdrop-blur-md border-b border-white/10 pb-4">
-        <nav className="flex justify-between items-center max-w-[1180px] mx-auto h-12 md:h-16 px-2 md:px-6">
-          {/* Left: Home Link & Project Title */}
-          <div className="flex items-center gap-4 max-w-[60%]">
-            <Link to="/" className="text-dim hover:text-white transition-colors flex items-center gap-2 shrink-0">
-              <span className="text-xl">←</span> 
-              <span className="hidden md:inline font-semibold uppercase tracking-widest text-xs">Back to Gallery</span>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
+      {/* Top nav bar */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 200,
+        background: 'rgba(7,7,10,0.92)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid var(--border)',
+        padding: '0 1.5rem',
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          maxWidth: '1200px',
+          margin: '0 auto',
+          height: '3.5rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flex: 1, minWidth: 0 }}>
+            <Link to="/" style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.6rem',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              color: 'var(--dim)',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              flexShrink: 0,
+              transition: 'color 0.2s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--dim)'}
+            >
+              ← Back
             </Link>
-            <div className="w-[1px] h-6 bg-white/10 hidden md:block"></div>
-            <h1 className="font-display text-lg md:text-[1.35rem] font-semibold text-white truncate">
-              {project.title}
-            </h1>
+            <div style={{ width: '1px', height: '16px', background: 'var(--border)', flexShrink: 0 }} />
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.05rem',
+              fontWeight: 400,
+              color: 'var(--text)',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}>{project.title}</h1>
           </div>
-
-          {/* Right: Prev/Next Controls */}
-          <div className="flex items-center gap-2 md:gap-4">
-            {prevProject ? (
-              <Link 
-                to={`/project/${prevProject.id}`}
-                className="w-10 h-10 flex items-center justify-center rounded-full text-dim hover:text-white hover:bg-white/5 active:scale-90 transition-all"
-                aria-label="Previous project"
-              >
-                ←
-              </Link>
-            ) : (
-              <div className="w-10 h-10 flex items-center justify-center rounded-full text-white/10 cursor-not-allowed">←</div>
-            )}
-            
-            {nextProject ? (
-              <Link 
-                to={`/project/${nextProject.id}`}
-                className="w-10 h-10 flex items-center justify-center rounded-full text-dim hover:text-white hover:bg-white/5 active:scale-90 transition-all"
-                aria-label="Next project"
-              >
-                →
-              </Link>
-            ) : (
-              <div className="w-10 h-10 flex items-center justify-center rounded-full text-white/10 cursor-not-allowed">→</div>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+            {[
+              { p: prevProject, arrow: '←', label: 'Previous project' },
+              { p: nextProject, arrow: '→', label: 'Next project' },
+            ].map(({ p: proj, arrow, label }) => (
+              proj ? (
+                <Link key={arrow} to={`/project/${proj.id}`} aria-label={label}
+                  style={{
+                    width: '36px', height: '36px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '50%',
+                    color: 'var(--dim)',
+                    textDecoration: 'none',
+                    fontSize: '1rem',
+                    transition: 'color 0.2s, background 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--dim)'; e.currentTarget.style.background = 'transparent'; }}
+                >{arrow}</Link>
+              ) : (
+                <div key={arrow} style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dim-2)', opacity: 0.3 }}>{arrow}</div>
+              )
+            ))}
           </div>
-        </nav>
+        </div>
       </header>
 
-      <div className="flex-1 w-full flex flex-col md:flex-row">
-        {/* Column 1: Details & Metadata */}
-        <div className="w-full md:w-1/3 flex flex-col p-8 md:p-12 border-b md:border-b-0 md:border-r border-white/10 bg-surface/50 shrink-0">
-          <div className="md:sticky md:top-28">
-            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-accent mb-4 block">{meta}</span>
-            <h2 className="text-3xl md:text-5xl font-display text-white mb-4 md:mb-6 break-words">{project.title}</h2>
-            {project.description && (
-              <p className="text-dim text-lg leading-relaxed mb-8">{project.description}</p>
+      {/* Body */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
+        {/* Sidebar */}
+        <div style={{
+          width: 'min(320px, 100%)',
+          borderRight: '1px solid var(--border)',
+          padding: '2.5rem',
+          background: 'var(--surface)',
+          flexShrink: 0,
+        }}>
+          <div style={{ position: 'sticky', top: '4rem' }}>
+            {meta && (
+              <span style={{
+                display: 'block',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.58rem',
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: 'var(--accent)',
+                marginBottom: '1rem',
+              }}>{meta}</span>
             )}
-            
-            <div className="flex flex-col gap-4 mb-6">
-              {project.client && (
-                <div className="border-t border-white/10 pt-4">
-                  <span className="block text-xs uppercase tracking-widest text-dim mb-1">Client</span>
-                  <span className="text-white text-lg">{project.client}</span>
+            <h2 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontWeight: 300,
+              color: 'var(--text)',
+              lineHeight: 1.15,
+              marginBottom: '1.25rem',
+            }}>{project.title}</h2>
+            {project.description && (
+              <p style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.95rem',
+                lineHeight: 1.8,
+                color: 'var(--dim)',
+                marginBottom: '2rem',
+              }}>{project.description}</p>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {[
+                ['Client', project.client],
+                ['Scale', project.dimensions],
+                ['Location', project.location],
+                ['Year', project.year],
+              ].filter(([, v]) => v).map(([label, value]) => (
+                <div key={label} style={{ borderTop: '1px solid var(--border)', padding: '0.85rem 0' }}>
+                  <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--dim)', marginBottom: '0.3rem' }}>{label}</span>
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.95rem', color: 'var(--text)' }}>{value}</span>
                 </div>
-              )}
-              {project.dimensions && (
-                <div className="border-t border-white/10 pt-4">
-                  <span className="block text-xs uppercase tracking-widest text-dim mb-1">Scale</span>
-                  <span className="text-white text-lg">{project.dimensions}</span>
-                </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Column 2: Media Showcase */}
-        <div className="w-full md:w-2/3 p-4 pt-8 md:p-12 bg-black pb-16">
-          <div className="max-w-4xl mx-auto space-y-4">
-            {project.thumbnailUrl && renderMediaBlock(project.thumbnailUrl, 'thumb', true)}
-            {(project.mediaUrls || []).map((block, idx) => renderMediaBlock(block, idx, false))}
+        {/* Media column */}
+        <div style={{ flex: 1, minWidth: 0, padding: 'clamp(1.5rem, 4vw, 3rem)', background: 'var(--bg)' }}>
+          <div style={{ maxWidth: '860px' }}>
+            {project.thumbnailUrl && renderBlock(project.thumbnailUrl, 'thumb', true)}
+            {(project.mediaUrls || []).map((block, idx) => renderBlock(block, idx, false))}
           </div>
+
+          {/* Prev/Next navigation */}
+          {(prevProject || nextProject) && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--border)', maxWidth: '860px' }}>
+              {prevProject ? (
+                <Link to={`/project/${prevProject.id}`} style={{ textDecoration: 'none', padding: '1.25rem', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--surface)', transition: 'border-color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(196,165,116,0.3)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                >
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--dim)', marginBottom: '0.5rem' }}>← Previous</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--text)' }}>{prevProject.title}</div>
+                </Link>
+              ) : <div />}
+              {nextProject ? (
+                <Link to={`/project/${nextProject.id}`} style={{ textDecoration: 'none', padding: '1.25rem', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--surface)', transition: 'border-color 0.2s', textAlign: 'right' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(196,165,116,0.3)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                >
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--dim)', marginBottom: '0.5rem' }}>Next →</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: 'var(--text)' }}>{nextProject.title}</div>
+                </Link>
+              ) : <div />}
+            </div>
+          )}
         </div>
       </div>
     </div>

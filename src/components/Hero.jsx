@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSiteSettings } from '../lib/SiteContext';
 
-// Mirror the getPageSections() logic from rfrns/index.html
 function getPageSections(d) {
   if (d.pageSections && d.pageSections.length) {
     return [...d.pageSections]
       .map((s, i) => ({ ...s, order: s.order ?? i }))
       .sort((a, b) => a.order - b.order);
   }
-  // Fallback to legacy navVisibility + heroCtaText fields
   const nav = d.navVisibility || {};
-  const sections = [
+  return [
     { id: 'about', type: 'about', order: 0, enabled: nav.about !== false, showInNav: nav.about !== false, navLabel: 'About', showHeroButton: false },
     { id: 'works', type: 'works', order: 1, enabled: true, showInNav: nav.works !== false, navLabel: 'Works', showHeroButton: true, heroButtonText: d.heroCtaText || 'View Works', heroButtonStyle: 'primary' },
     { id: 'contact', type: 'contact', order: 2, enabled: true, showInNav: nav.contact !== false, navLabel: 'Contact', showHeroButton: d.showHeroContact !== false, heroButtonText: 'Get in Touch', heroButtonStyle: 'ghost' }
   ];
-  return sections;
 }
 
 const upgradeImageUrl = (url) => {
@@ -23,8 +20,7 @@ const upgradeImageUrl = (url) => {
   let u = url.trim();
   if (u.startsWith('data:')) return u;
   if (u.includes('cloudinary.com')) {
-    // Drop quality to 50 for max speed
-    return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_50,w_1200,c_limit/');
+    return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_55,w_1400,c_limit/');
   }
   if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
     let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
@@ -34,127 +30,76 @@ const upgradeImageUrl = (url) => {
   return u;
 };
 
-const isVideo = (url) => /\.(mp4|webm|mov)(\?|$)/i.test(url);
-const getYouTubeId = (url) => {
-  if (!url) return null;
-  const src = url.trim();
-  try {
-    const u = new URL(src);
-    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('/')[0]?.split('?')[0] || null;
-    if (u.hostname.includes('youtube.com') || u.hostname.includes('youtube-nocookie.com')) {
-      if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1]?.split('/')[0] || null;
-      if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/shorts/')[1]?.split('/')[0] || null;
-      return u.searchParams.get('v');
-    }
-  } catch { /* ignore */ }
-  const m = src.match(/(?:v=|\/embed\/|youtu\.be\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
-  return m ? m[1] : null;
-};
+const MARQUEE_TEXT = 'MURAL · DAHAB · SINAI · STREET ART · جداريات · دهب · EGYPT · فن الجدران · CUSTOM MURALS · سيناء ·';
 
-// Extracted Background component to handle the slideshow perfectly
-const HeroBackground = ({ settings }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  // Build unique playlist
-  const playlist = Array.from(new Set([
-    ...(settings?.heroImages || []),
-    settings?.heroImage,
-    ...(settings?.heroVideos || []),
-    settings?.heroVideo
-  ].filter(Boolean)));
-
-  const intervalSec = Math.min(60, Math.max(3, Number(settings?.heroSlideInterval) || 6));
-  const shuffle = settings?.heroSlideShuffle !== false;
+const HeroBackground = ({ images }) => {
+  const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    if (playlist.length > 0 && shuffle) {
-      setCurrentIndex(Math.floor(Math.random() * playlist.length));
-    }
-  }, [playlist.length, shuffle]);
-
-  useEffect(() => {
-    if (playlist.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentIndex(prev => {
-        if (shuffle) {
-          let next = prev;
-          while (next === prev && playlist.length > 1) {
-            next = Math.floor(Math.random() * playlist.length);
-          }
-          return next;
-        }
-        return (prev + 1) % playlist.length;
-      });
-    }, intervalSec * 1000);
-    return () => clearInterval(timer);
-  }, [playlist.length, intervalSec, shuffle]);
-
-  if (playlist.length === 0) return null;
+    if (images.length <= 1) return;
+    const t = setInterval(() => setIdx(i => (i + 1) % images.length), 7000);
+    return () => clearInterval(t);
+  }, [images.length]);
 
   return (
-    <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen overflow-hidden hero-bg">
-      {playlist.map((url, index) => {
-        const isActive = index === currentIndex;
-        const opacityClass = isActive ? 'opacity-100' : 'opacity-0';
-        const zIndexClass = isActive ? 'z-10' : 'z-0';
-        
-        const ytId = getYouTubeId(url);
-        const video = isVideo(url);
-
-        return (
-          <div 
-            key={url + index} 
-            className={`absolute inset-0 ${opacityClass} ${zIndexClass}`}
-          >
-            {ytId ? (
-              <div className="absolute inset-0 overflow-hidden pointer-events-none flex justify-center items-center">
-                <iframe
-                  src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`}
-                  className="w-[100vw] h-[100vh] min-w-[177.77vh] min-h-[56.25vw] scale-[1.15]"
-                  allow="autoplay; encrypted-media"
-                  style={{ border: 0 }}
-                />
-              </div>
-            ) : video ? (
-              <video 
-                src={url} 
-                className="w-full h-full object-cover" 
-                autoPlay 
-                muted 
-                loop 
-                playsInline 
-              />
-            ) : (
-              <div
-                className="w-full h-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${upgradeImageUrl(url)})` }}
-              />
-            )}
-          </div>
-        );
-      })}
+    <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
+      {images.map((url, i) => (
+        <div
+          key={url + i}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${upgradeImageUrl(url)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: i === idx ? 0.32 : 0,
+            transition: 'opacity 1.8s ease',
+            transform: i === idx ? 'scale(1.04)' : 'scale(1)',
+            transitionProperty: 'opacity, transform',
+            transitionDuration: '1.8s',
+          }}
+        />
+      ))}
+      {/* Dark vignette */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at center, transparent 20%, rgba(7,7,10,0.7) 100%)',
+        zIndex: 1,
+      }} />
+      {/* Bottom fade to bg */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%',
+        background: 'linear-gradient(to top, var(--bg) 0%, transparent 100%)',
+        zIndex: 2,
+      }} />
     </div>
   );
 };
 
 const Hero = () => {
   const { settings, loading } = useSiteSettings();
+  const titleRef = useRef(null);
 
-  const eyebrow = settings?.heroEyebrow || settings?.artistName || 'Mural Artist';
-  const title = settings?.heroTitle || 'Transforming Walls<br>Into Stories';
-  const sub = settings?.heroSubtitle || 'Large-scale murals and public art';
+  // Only use images (no YouTube iframes for speed)
+  const images = !loading && settings
+    ? Array.from(new Set([
+        ...(settings.heroImages || []),
+        settings.heroImage,
+      ].filter(Boolean)))
+    : [];
 
-  // Build hero action buttons from pageSections (same as legacy renderHeroActions)
+  const eyebrow = settings?.heroEyebrow || 'Mural Artist';
+  const title   = settings?.heroTitle   || 'Painter of the Peninsula';
+  const sub     = settings?.heroSubtitle|| 'Breathing life into walls through color, culture, and desert soul.';
+
   const heroBtns = settings
     ? (() => {
         const sections = getPageSections(settings);
         const btns = sections.filter(s => s.enabled !== false && s.showHeroButton);
         if (btns.length) return btns;
-        // Absolute fallback
-        const fallback = [];
-        fallback.push({ id: 'works', heroButtonText: settings.heroCtaText || 'View Works', heroButtonStyle: 'primary', navLabel: 'Works' });
+        const fallback = [{ id: 'works', heroButtonText: settings.heroCtaText || 'View Works', heroButtonStyle: 'primary' }];
         if (settings.emailLink && settings.showHeroContact !== false) {
-          fallback.push({ id: 'contact', heroButtonText: 'Get in Touch', heroButtonStyle: 'ghost', navLabel: 'Contact' });
+          fallback.push({ id: 'contact', heroButtonText: 'Get in Touch', heroButtonStyle: 'ghost' });
         }
         return fallback;
       })()
@@ -163,64 +108,164 @@ const Hero = () => {
   return (
     <section
       id="hero"
-      className="relative min-h-[100dvh] flex flex-col justify-center items-center px-4 md:px-10 py-32 text-center overflow-hidden"
       aria-label="Introduction"
+      style={{
+        position: 'relative',
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        paddingTop: '6rem',
+        paddingBottom: '6rem',
+      }}
     >
-      <HeroBackground settings={settings} />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background z-0 pointer-events-none" />
+      <HeroBackground images={images} />
 
-      {/* Decorative Orbs */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-accent/20 rounded-full blur-[100px] z-0 pointer-events-none" aria-hidden="true" />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-accent2/20 rounded-full blur-[100px] z-0 pointer-events-none" style={{ animationDelay: '2s' }} aria-hidden="true" />
+      {/* Subtle desert geometry lines */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+        backgroundImage: `
+          linear-gradient(rgba(196,165,116,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(196,165,116,0.04) 1px, transparent 1px)
+        `,
+        backgroundSize: '80px 80px',
+        maskImage: 'radial-gradient(ellipse at center, #000 30%, transparent 75%)',
+      }} />
 
-      <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center px-2">
-        <p className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase text-accent mb-4 md:mb-6" id="hero-eyebrow">
-          {eyebrow}
-        </p>
+      {/* Main content */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        maxWidth: '900px',
+        textAlign: 'center',
+        padding: '0 1.5rem',
+      }}>
+        {/* Eyebrow */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '1rem',
+          marginBottom: '1.75rem',
+        }}>
+          <div style={{ height: '1px', width: '2.5rem', background: 'var(--accent)', opacity: 0.6 }} />
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.65rem',
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: 'var(--accent)',
+          }}>
+            {eyebrow}
+          </span>
+          <div style={{ height: '1px', width: '2.5rem', background: 'var(--accent)', opacity: 0.6 }} />
+        </div>
 
+        {/* Title */}
         <h1
-          className="font-display font-normal text-4xl md:text-7xl lg:text-8xl leading-[1.1] tracking-tight mb-6 md:mb-8"
+          ref={titleRef}
           id="hero-title"
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(3rem, 9vw, 7.5rem)',
+            fontWeight: 300,
+            lineHeight: 1.06,
+            letterSpacing: '-0.01em',
+            color: 'var(--text)',
+            marginBottom: '1.5rem',
+            animation: 'fadeUp 1s 0.1s cubic-bezier(0.16,1,0.3,1) both',
+          }}
           dangerouslySetInnerHTML={{ __html: title }}
         />
 
-        <p className="text-base md:text-xl text-dim max-w-xl mx-auto mb-8 md:mb-10 leading-relaxed" id="hero-sub">
+        {/* Subtitle */}
+        <p
+          id="hero-sub"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'clamp(0.95rem, 2.2vw, 1.2rem)',
+            color: 'var(--dim)',
+            maxWidth: '560px',
+            margin: '0 auto 2.5rem',
+            lineHeight: 1.7,
+            animation: 'fadeUp 1s 0.25s cubic-bezier(0.16,1,0.3,1) both',
+          }}
+        >
           {sub}
         </p>
 
-        {/* Dynamic CTA buttons from pageSections — mirrors renderHeroActions() */}
-        <div className="flex flex-wrap gap-4 justify-center" id="hero-actions">
+        {/* CTA buttons */}
+        <div
+          id="hero-actions"
+          style={{
+            display: 'flex',
+            gap: '0.75rem',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            animation: 'fadeUp 1s 0.4s cubic-bezier(0.16,1,0.3,1) both',
+          }}
+        >
           {heroBtns.map((s, i) => {
-            const text = s.heroButtonText || s.navLabel || 'Explore';
+            const text  = s.heroButtonText || s.navLabel || 'Explore';
             const style = s.heroButtonStyle || (i === 0 ? 'primary' : 'ghost');
-            const href = `#${s.id}`;
-            if (style === 'ghost') {
-              return (
-                <a
-                  key={s.id || i}
-                  href={href}
-                  className="inline-flex items-center justify-center px-8 py-4 border border-white/20 text-white font-semibold rounded-full hover:bg-white/10 hover:-translate-y-0.5 transition-all duration-300"
-                >
-                  {text}
-                </a>
-              );
-            }
             return (
               <a
                 key={s.id || i}
-                href={href}
-                className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-br from-accent to-accent-hover text-black font-semibold rounded-full shadow-[0_12px_30px_rgba(196,165,116,0.18)] hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(196,165,116,0.25)] transition-all duration-300"
+                href={`#${s.id}`}
+                className={style === 'ghost' ? 'btn-ghost' : 'btn-primary'}
               >
                 {text}
+                {style === 'primary' && (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
               </a>
             );
           })}
         </div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50">
-        <span className="text-[0.65rem] tracking-[0.2em] uppercase">Scroll</span>
-        <span className="w-px h-8 bg-gradient-to-b from-white to-transparent" />
+      {/* Marquee strip */}
+      <div style={{
+        position: 'absolute',
+        bottom: '4.5rem',
+        left: 0, right: 0,
+        zIndex: 10,
+        overflow: 'hidden',
+        borderTop:    '1px solid rgba(196,165,116,0.1)',
+        borderBottom: '1px solid rgba(196,165,116,0.1)',
+        padding: '0.6rem 0',
+        pointerEvents: 'none',
+      }}>
+        <div className="marquee-track" style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.62rem',
+          letterSpacing: '0.2em',
+          color: 'var(--dim)',
+          whiteSpace: 'nowrap',
+          userSelect: 'none',
+        }}>
+          {/* Repeated twice for seamless loop */}
+          {[0,1].map(n => (
+            <span key={n} style={{ marginRight: '4rem' }}>
+              {MARQUEE_TEXT}&nbsp;&nbsp;&nbsp;{MARQUEE_TEXT}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Scroll indicator */}
+      <div style={{
+        position: 'absolute', bottom: '1.5rem', left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 10,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+        opacity: 0.4,
+      }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Scroll</span>
+        <div style={{ width: '1px', height: '28px', background: 'linear-gradient(to bottom, var(--dim), transparent)' }} />
       </div>
     </section>
   );

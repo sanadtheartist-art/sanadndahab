@@ -2,24 +2,183 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Google Fonts ──────────────────────────────────────────── */
+/* Loaded in index.html for critical path performance */
+
 @layer base {
   :root {
-    --bg: #09090b;
-    --surface: #131316;
-    --surface-2: #1a1a1f;
-    --border: #252528;
-    --text: #fafafa;
-    --dim: #71717a;
-    --accent: #c4a574;
-    --accent-dim: #c4a57426;
-    --font-display: 'Instrument Serif', Georgia, serif;
-    --font-body: 'DM Sans', system-ui, sans-serif;
+    /* Palette — Desert Night */
+    --bg:        #07070a;
+    --surface:   #0f0e0c;
+    --surface-2: #161410;
+    --border:    #1f1d19;
+    --text:      #f5f0e8;
+    --dim:       #6b6560;
+    --dim-2:     #4a4540;
+    --accent:    #c4a574;
+    --accent-2:  #d4654a;
+    --accent-dim:#c4a57420;
+    --danger:    #f87171;
+    --success:   #4ade80;
+
+    /* Typography */
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-body:    'Space Grotesk', system-ui, sans-serif;
+    --font-mono:    'Space Mono', monospace;
+
+    /* Sizing */
+    --nav-h: 4rem;
+    --radius: 4px;
+    --radius-lg: 8px;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-background text-text font-sans antialiased;
-    background-image:
-      linear-gradient(135deg, rgba(123, 223, 242, 0.035), transparent 30%),
-      linear-gradient(315deg, rgba(242, 181, 212, 0.035), transparent 34%);
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
+
+  /* Grain overlay on body */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.028;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    background-size: 128px 128px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: #000;
+  }
+}
+
+/* ─── Scroll-reveal utility ─────────────────────────────────── */
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1),
+                transform 0.8s cubic-bezier(0.16,1,0.3,1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.32s; }
+
+  /* Shimmer skeleton */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--surface) 25%,
+      var(--surface-2) 50%,
+      var(--surface) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
+
+  /* Image fade-in */
+  .img-fade {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .img-fade.loaded {
+    opacity: 1;
+  }
+}
+
+/* ─── Keyframes ─────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes clipReveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Marquee strip ─────────────────────────────────────────── */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 22s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ─── Small UI polish ───────────────────────────────────────── */
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  padding: .55rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 0.25s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary:hover {
+  background: #d4b88a;
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  padding: .55rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.18);
+  transition: background 0.25s, border-color 0.25s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.35);
+  transform: translateY(-1px);
 }
