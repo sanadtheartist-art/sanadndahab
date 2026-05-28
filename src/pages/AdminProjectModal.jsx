@@ -109,6 +109,42 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
     }
   };
 
+  const handleSyncToCloudinary = async (field, index = null) => {
+    let currentUrl;
+    if (index !== null) {
+      currentUrl = formData.mediaUrls[index][field];
+    } else {
+      currentUrl = formData[field];
+    }
+
+    if (!currentUrl) {
+      alert("No URL to sync!");
+      return;
+    }
+
+    if (currentUrl.includes('cloudinary.com') || currentUrl.includes('youtube.com') || currentUrl.includes('youtu.be')) {
+      alert("This URL is already on Cloudinary, is a YouTube video, or is invalid.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const cloudinaryUrl = await uploadToCloudinary(currentUrl);
+      
+      if (index !== null) {
+        handleMediaChange(index, field, cloudinaryUrl);
+      } else {
+        setFormData(prev => ({ ...prev, [field]: cloudinaryUrl }));
+      }
+      alert('Successfully synced to Cloudinary!');
+    } catch (err) {
+      console.error(err);
+      alert('Sync failed. See console.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -177,6 +213,7 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
                 <input type="file" style={{display:'none'}} accept="image/*" onChange={(e) => handleFileUpload(e, 'thumbnailUrl')} />
               </label>
               <button type="button" className="btn btn-outline" onClick={() => handleUrlUpload('thumbnailUrl')} disabled={uploading}>Upload URL</button>
+              <button type="button" className="btn btn-outline" onClick={() => handleSyncToCloudinary('thumbnailUrl')} disabled={uploading || !formData.thumbnailUrl}>Sync to Cloudinary</button>
             </div>
           </div>
 
@@ -231,6 +268,7 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
                         <input type="file" style={{display:'none'}} accept="image/*,video/*" onChange={(e) => handleFileUpload(e, 'content', idx)} />
                       </label>
                       <button type="button" className="btn btn-outline" onClick={() => handleUrlUpload('content', idx)} disabled={uploading} style={{padding:'12px 14px'}}>Upload URL</button>
+                      <button type="button" className="btn btn-outline" onClick={() => handleSyncToCloudinary('content', idx)} disabled={uploading || !block.content} style={{padding:'12px 14px'}}>Sync to Cloudinary</button>
                     </div>
                   ) : (
                     <textarea 
