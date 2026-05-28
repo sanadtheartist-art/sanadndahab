@@ -6,6 +6,7 @@ import AdminProjectModal from './AdminProjectModal';
 import AdminSections from '../components/AdminSections';
 import AdminSettings from '../components/AdminSettings';
 import AdminMessages from '../components/AdminMessages';
+import MediaLibrary from '../components/MediaLibrary';
 import '../admin.css';
 
 const Admin = () => {
@@ -186,6 +187,7 @@ const Admin = () => {
 
           <div className="nav-group">
             <div className="nav-group-label">Content</div>
+            <button className={`nav-btn ${currentTab === 'media' ? 'active' : ''}`} onClick={() => setCurrentTab('media')}><span className="icon">▦</span> Media Library</button>
             <button className={`nav-btn ${currentTab === 'identity' ? 'active' : ''}`} onClick={() => setCurrentTab('identity')}><span className="icon">◎</span> Site Identity</button>
             <button className={`nav-btn ${currentTab === 'sections' ? 'active' : ''}`} onClick={() => setCurrentTab('sections')}><span className="icon">▤</span> Page Sections</button>
             <button className={`nav-btn ${currentTab === 'about' ? 'active' : ''}`} onClick={() => setCurrentTab('about')}><span className="icon">○</span> About Page</button>
@@ -214,6 +216,7 @@ const Admin = () => {
           <header className="topbar">
             <h2>
               {currentTab === 'dashboard' && 'Dashboard'}
+              {currentTab === 'media' && 'Media Library'}
               {currentTab === 'portfolio' && 'Manage Projects'}
               {currentTab === 'messages' && 'Inbox Messages'}
               {currentTab === 'identity' && 'Site Identity'}
@@ -316,6 +319,12 @@ const Admin = () => {
             {currentTab === 'messages' && (
               <div className="panel active">
                 <AdminMessages messages={messages} loading={loadingMessages} />
+              </div>
+            )}
+
+            {currentTab === 'media' && (
+              <div className="panel active" style={{maxWidth: '1200px'}}>
+                <MediaLibrary />
               </div>
             )}
 

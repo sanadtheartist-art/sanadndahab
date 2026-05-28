@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, storage } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadToCloudinary } from '../lib/cloudinary';
 
 const FONT_OPTIONS = [
   { label: 'System Default', value: 'system-ui' },
@@ -99,10 +100,27 @@ const AdminSettings = ({ currentTab }) => {
     setUploading(true);
     setMsg({ text: `Uploading ${fieldName}...`, type: 'success' });
     try {
-      const fileRef = ref(storage, `settings/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
+      const url = await uploadToCloudinary(file);
       setFormData(prev => ({ ...prev, [fieldName]: url }));
+      setMsg({ text: 'Upload successful!', type: 'success' });
+      setTimeout(() => setMsg({ text: '', type: '' }), 3000);
+    } catch (err) {
+      console.error(err);
+      setMsg({ text: 'Upload failed', type: 'error' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUrlUpload = async (fieldName) => {
+    const url = prompt('Enter image URL to fetch and upload to Cloudinary:');
+    if (!url) return;
+
+    setUploading(true);
+    setMsg({ text: `Fetching and uploading ${fieldName}...`, type: 'success' });
+    try {
+      const cloudinaryUrl = await uploadToCloudinary(url);
+      setFormData(prev => ({ ...prev, [fieldName]: cloudinaryUrl }));
       setMsg({ text: 'Upload successful!', type: 'success' });
       setTimeout(() => setMsg({ text: '', type: '' }), 3000);
     } catch (err) {
@@ -154,16 +172,10 @@ const AdminSettings = ({ currentTab }) => {
             style={{ flex: 1 }}
           />
           {allowUpload && (
-            <label className={`btn btn-ghost ${uploading ? 'disabled' : ''}`} style={{ cursor: uploading ? 'not-allowed' : 'pointer' }}>
-              {uploading ? '...' : 'Upload'}
-              <input
-                type="file"
-                className="hidden"
-                style={{ display: 'none' }}
-                accept="image/*"
-                onChange={(e) => handleFileUpload(e, name)}
-              />
-            </label>
+            <div className="flex gap-2">
+              <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, name)} disabled={uploading} className="flex-1" />
+              <button type="button" className="btn btn-outline" onClick={() => handleUrlUpload(name)} disabled={uploading}>Upload URL</button>
+            </div>
           )}
         </div>
       )}

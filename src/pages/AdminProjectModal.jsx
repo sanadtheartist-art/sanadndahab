@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { doc, addDoc, updateDoc, collection } from 'firebase/firestore';
-import { db, storage } from '../lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '../lib/firebase';
+import { uploadToCloudinary } from '../lib/cloudinary';
 
 const AdminProjectModal = ({ project, onClose, onSave }) => {
   const [uploading, setUploading] = useState(false);
@@ -68,9 +68,7 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
 
     setUploading(true);
     try {
-      const fileRef = ref(storage, `projects/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
+      const url = await uploadToCloudinary(file);
 
       if (index !== null) {
         handleMediaChange(index, field, url);
@@ -80,6 +78,27 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
     } catch (err) {
       console.error(err);
       alert('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUrlUpload = async (field, index = null) => {
+    const url = prompt('Enter image URL to fetch and upload to Cloudinary:');
+    if (!url) return;
+
+    setUploading(true);
+    try {
+      const cloudinaryUrl = await uploadToCloudinary(url);
+      
+      if (index !== null) {
+        handleMediaChange(index, field, cloudinaryUrl);
+      } else {
+        setFormData(prev => ({ ...prev, [field]: cloudinaryUrl }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('URL Upload failed');
     } finally {
       setUploading(false);
     }
@@ -149,9 +168,10 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
             <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
               <input type="url" name="thumbnailUrl" value={formData.thumbnailUrl} onChange={handleChange} style={{flex:1}} />
               <label className={`btn btn-ghost ${uploading ? 'disabled' : ''}`} style={{cursor: uploading ? 'not-allowed' : 'pointer'}}>
-                {uploading ? '...' : 'Upload'}
+                {uploading ? '...' : 'Upload File'}
                 <input type="file" style={{display:'none'}} accept="image/*" onChange={(e) => handleFileUpload(e, 'thumbnailUrl')} />
               </label>
+              <button type="button" className="btn btn-outline" onClick={() => handleUrlUpload('thumbnailUrl')} disabled={uploading}>Upload URL</button>
             </div>
           </div>
 
@@ -202,9 +222,10 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
                         style={{flex:1}}
                       />
                       <label className={`btn btn-ghost ${uploading ? 'disabled' : ''}`} style={{cursor: uploading ? 'not-allowed' : 'pointer', padding:'12px 14px'}}>
-                        {uploading ? '...' : 'Upload'}
+                        {uploading ? '...' : 'Upload File'}
                         <input type="file" style={{display:'none'}} accept="image/*,video/*" onChange={(e) => handleFileUpload(e, 'content', idx)} />
                       </label>
+                      <button type="button" className="btn btn-outline" onClick={() => handleUrlUpload('content', idx)} disabled={uploading} style={{padding:'12px 14px'}}>Upload URL</button>
                     </div>
                   ) : (
                     <textarea 
