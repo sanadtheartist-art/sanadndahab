@@ -115,6 +115,8 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
         <div className={
           settings.galleryLayout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' :
           settings.galleryLayout === 'list' ? 'flex flex-col gap-8 max-w-4xl mx-auto' :
+          settings.galleryLayout === 'bento' ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[minmax(200px,auto)]' :
+          settings.galleryLayout === 'carousel' ? 'flex overflow-x-auto gap-4 md:gap-6 pb-8 snap-x snap-mandatory' :
           'columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6'
         }>
           <AnimatePresence mode="popLayout">
@@ -128,7 +130,9 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
                 onClick={() => setSelectedProjectIndex(idx)}
                 className={`relative group overflow-hidden rounded-xl bg-surface cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/5 ${
                   settings.galleryLayout === 'grid' ? 'aspect-[4/3]' : 
-                  settings.galleryLayout === 'list' ? 'w-full' : 
+                  settings.galleryLayout === 'list' ? 'w-full aspect-[16/9]' : 
+                  settings.galleryLayout === 'bento' ? (idx % 6 === 0 ? 'sm:col-span-2 md:col-span-2 md:row-span-2 aspect-square md:aspect-auto' : idx % 6 === 3 ? 'sm:col-span-2 md:col-span-2 aspect-[2/1]' : 'aspect-square') :
+                  settings.galleryLayout === 'carousel' ? 'flex-none w-[85vw] sm:w-[60vw] md:w-[45vw] lg:w-[35vw] aspect-[4/5] snap-center' :
                   'break-inside-avoid'
                 }`}
               >
