@@ -4,6 +4,7 @@ import { SiteProvider, useSiteSettings } from './lib/SiteContext';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import NotFound from './pages/NotFound';
+import SEO from './components/SEO';
 
 // Inner component to consume useSiteSettings context
 const AppContent = () => {
@@ -23,11 +24,14 @@ const AppContent = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/admin" element={<Admin />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <>
+      <SEO />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 };
 

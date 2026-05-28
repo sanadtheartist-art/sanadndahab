@@ -11,7 +11,13 @@ export default defineConfig({
         // Split vendor libraries into a separate chunk
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
+            if (id.includes('firebase')) {
+              return 'firebase';
+            }
+            if (id.includes('framer-motion')) {
+              return 'framer-motion';
+            }
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
               return 'vendor';
             }
           }

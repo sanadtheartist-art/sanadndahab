@@ -10,6 +10,7 @@ const ResponsiveImage = ({ src, alt = '', className = '', breakpoints = [360, 64
   }
 
   const isGoogle = /googleusercontent\.com|ggpht\.com/i.test(src);
+  const isCloudinary = src.includes('cloudinary.com');
 
   const makeSrcForWidth = (w) => {
     let u = src.trim();
@@ -19,11 +20,17 @@ const ResponsiveImage = ({ src, alt = '', className = '', breakpoints = [360, 64
       u = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
       return u + `=s${w}`;
     }
+    if (isCloudinary) {
+      // Remove any existing transformations we might have injected
+      u = u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/');
+      // Inject new transformations
+      return u.replace('/upload/', `/upload/f_auto,q_auto,w_${w},c_limit/`);
+    }
     // For other hosts we just return the original; srcset won't be provided
     return u;
   };
 
-  const srcSet = isGoogle ? breakpoints.map(w => `${makeSrcForWidth(w)} ${w}w`).join(', ') : undefined;
+  const srcSet = (isGoogle || isCloudinary) ? breakpoints.map(w => `${makeSrcForWidth(w)} ${w}w`).join(', ') : undefined;
   const primary = makeSrcForWidth(Math.max(...breakpoints));
 
   return (
