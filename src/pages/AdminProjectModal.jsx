@@ -145,6 +145,62 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
     }
   };
 
+  const handleSyncAll = async () => {
+    setUploading(true);
+    try {
+      const updates = {};
+      let needsUpdate = false;
+
+      const checkAndUpload = async (url) => {
+        if (!url || typeof url !== 'string') return url;
+        if (url.includes('cloudinary.com') || url.includes('youtube.com') || url.includes('youtu.be')) return url;
+        try {
+          return await uploadToCloudinary(url);
+        } catch (e) {
+          console.error("Failed to sync:", url, e);
+          return url;
+        }
+      };
+
+      if (formData.thumbnailUrl) {
+        const newThumb = await checkAndUpload(formData.thumbnailUrl);
+        if (newThumb !== formData.thumbnailUrl) {
+          updates.thumbnailUrl = newThumb;
+          needsUpdate = true;
+        }
+      }
+
+      if (formData.mediaUrls && formData.mediaUrls.length > 0) {
+        const newMediaUrls = [];
+        for (const block of formData.mediaUrls) {
+          if (block.type === 'media' && block.content) {
+            const newUrl = await checkAndUpload(block.content);
+            if (newUrl !== block.content) needsUpdate = true;
+            newMediaUrls.push({ ...block, content: newUrl });
+          } else {
+            newMediaUrls.push(block);
+          }
+        }
+        if (updates.mediaUrls || newMediaUrls.some((b, i) => b.content !== formData.mediaUrls[i].content)) {
+          updates.mediaUrls = newMediaUrls;
+          needsUpdate = true;
+        }
+      }
+
+      if (needsUpdate) {
+        setFormData(prev => ({ ...prev, ...updates }));
+        alert('Successfully synced all project images to Cloudinary!');
+      } else {
+        alert('All images are already on Cloudinary or are not syncable.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Sync All failed. See console.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -287,8 +343,11 @@ const AdminProjectModal = ({ project, onClose, onSave }) => {
           </div>
 
           <div style={{display:'flex', justifyContent:'flex-end', gap:'12px', marginTop:'24px', paddingTop:'24px', borderTop:'1px solid rgba(255,255,255,0.08)'}}>
-            <button type="button" onClick={onClose} className="btn btn-ghost">Cancel</button>
-            <button type="submit" className="btn btn-primary">Save Project</button>
+            <button type="button" onClick={handleSyncAll} className="btn btn-outline" disabled={uploading} style={{marginRight: 'auto', borderColor: '#3b82f6', color: '#3b82f6'}}>
+              {uploading ? 'Syncing...' : 'Sync All Images to Cloudinary'}
+            </button>
+            <button type="button" onClick={onClose} className="btn btn-ghost" disabled={uploading}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={uploading}>Save Project</button>
           </div>
         </form>
       </div>
