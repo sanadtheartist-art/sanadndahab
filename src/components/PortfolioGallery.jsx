@@ -40,20 +40,16 @@ const ProjectCard = ({ project, isFeatured }) => {
       className="reveal"
       style={{
         display: 'block',
-        position: 'relative',
-        overflow: 'hidden',
         borderRadius: '4px',
         background: 'var(--surface)',
         textDecoration: 'none',
-        ...(isFeatured ? { gridColumn: 'span 2' } : {}),
+        overflow: 'hidden',
       }}
     >
-      {/* Image */}
-      <div style={{
-        overflow: 'hidden',
-        aspectRatio: isFeatured ? '16/7' : '4/5',
-        width: '100%',
-      }}>
+      {/* Relative wrapper so hover overlay positions over the natural-size image */}
+      <div style={{ position: 'relative' }}>
+      {/* Image — natural size, no crop */}
+      <div style={{ overflow: 'hidden', width: '100%' }}>
         <img
           src={getThumb(project.thumbnailUrl)}
           alt={project.title}
@@ -63,10 +59,9 @@ const ProjectCard = ({ project, isFeatured }) => {
           onLoad={e => e.currentTarget.classList.add('loaded')}
           style={{
             width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            transition: 'transform 0.7s cubic-bezier(0.16,1,0.3,1)',
+            height: 'auto',
             display: 'block',
+            transition: 'transform 0.7s cubic-bezier(0.16,1,0.3,1)',
           }}
           onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -135,7 +130,7 @@ const ProjectCard = ({ project, isFeatured }) => {
         )}
       </div>
 
-      {/* Always-visible minimal label (bottom) */}
+      {/* Always-visible minimal label (bottom of image) */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
         padding: '1.25rem 1rem 0.9rem',
@@ -153,6 +148,7 @@ const ProjectCard = ({ project, isFeatured }) => {
           textOverflow: 'ellipsis',
         }}>{project.title}</p>
       </div>
+      </div>{/* end relative wrapper */}
     </Link>
   );
 };
@@ -274,16 +270,16 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
         </p>
       ) : (
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
-          gap: '1rem',
+          columns: '280px 3',
+          columnGap: '1rem',
         }}>
           {filtered.map((project, idx) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              isFeatured={project.featured && idx === 0}
-            />
+            <div key={project.id} style={{ breakInside: 'avoid', marginBottom: '1rem' }}>
+              <ProjectCard
+                project={project}
+                isFeatured={false}
+              />
+            </div>
           ))}
         </div>
       )}
