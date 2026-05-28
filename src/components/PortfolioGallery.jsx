@@ -24,8 +24,11 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
         }
       });
       
-      // Sort based on sortOrder and createdAt
+      // Sort based on featured, sortOrder and createdAt
       items.sort((a, b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        
         const ao = a.sortOrder ?? 99999;
         const bo = b.sortOrder ?? 99999;
         if (ao !== bo) return ao - bo;
@@ -109,7 +112,11 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
       {filteredProjects.length === 0 ? (
         <p className="text-center text-dim">No works found in this category.</p>
       ) : (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+        <div className={
+          settings.galleryLayout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' :
+          settings.galleryLayout === 'list' ? 'flex flex-col gap-8 max-w-4xl mx-auto' :
+          'columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6'
+        }>
           <AnimatePresence mode="popLayout">
             {filteredProjects.map((project, idx) => (
               <motion.div 
@@ -119,13 +126,17 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
                 transition={{ duration: 0.2 }}
                 key={project.id} 
                 onClick={() => setSelectedProjectIndex(idx)}
-                className="relative group overflow-hidden rounded-xl bg-surface break-inside-avoid shadow-lg cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/5"
+                className={`relative group overflow-hidden rounded-xl bg-surface cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/5 ${
+                  settings.galleryLayout === 'grid' ? 'aspect-[4/3]' : 
+                  settings.galleryLayout === 'list' ? 'w-full' : 
+                  'break-inside-avoid'
+                }`}
               >
-                <div className="w-full">
+                <div className="w-full h-full">
                   <img
                     src={upgradeImageUrl(project.thumbnailUrl) || 'https://via.placeholder.com/600x800?text=No+Image'}
                     alt={project.title}
-                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105 img-fade"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 img-fade"
                     loading="lazy"
                     decoding="async"
                     onLoad={(e) => e.currentTarget.classList.add('loaded')}

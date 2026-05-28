@@ -282,9 +282,11 @@ const AdminSettings = ({ currentTab }) => {
           <p className="hint">Configure how your portfolio works appear.</p>
           <div className="row-2">
             <div className="field">
-              <label>Gallery Layout (Coming soon)</label>
-              <select disabled>
-                <option>Masonry (Pinterest-style)</option>
+              <label>Gallery Layout</label>
+              <select name="galleryLayout" value={formData.galleryLayout || 'masonry'} onChange={handleChange}>
+                <option value="masonry">Masonry (Pinterest-style)</option>
+                <option value="grid">Standard Grid (Cropped)</option>
+                <option value="list">Single Column List</option>
               </select>
             </div>
           </div>
