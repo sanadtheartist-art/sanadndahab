@@ -168,7 +168,7 @@ const Hero = () => {
           id="hero-title"
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(3.5rem, 11vw, 10rem)',
+            fontSize: 'clamp(3rem, 7vw, 6.5rem)',
             fontWeight: 300,
             lineHeight: 1.05,
             letterSpacing: '-0.02em',
