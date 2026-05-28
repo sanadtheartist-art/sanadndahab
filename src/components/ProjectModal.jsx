@@ -8,6 +8,10 @@ const ProjectModal = ({ project, onClose, onPrev, onNext, hasPrev, hasNext }) =>
     if (!url) return '';
     let u = url.trim();
     if (u.startsWith('data:')) return u;
+    if (u.includes('cloudinary.com')) {
+      // Lower quality (q_70) for modal images since they are larger, but we still want speed
+      return u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/f_auto,q_70,w_1200,c_limit/');
+    }
     if (/googleusercontent\.com|ggpht\.com/i.test(u)) {
         let out = u.replace(/=s\d+[^&]*/gi, '').replace(/=w\d+[^&]*/gi, '');
         if (!out.endsWith('=s0')) out += '=s0';
@@ -85,7 +89,7 @@ const ProjectModal = ({ project, onClose, onPrev, onNext, hasPrev, hasNext }) =>
 
   return (
     <div 
-      className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col overflow-hidden transition-all duration-300 animate-fade-up"
+      className="fixed inset-0 z-[200] bg-black/95 flex flex-col overflow-hidden"
       role="dialog"
       aria-modal="true"
       tabIndex="-1"

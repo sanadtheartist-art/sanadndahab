@@ -23,8 +23,8 @@ const ResponsiveImage = ({ src, alt = '', className = '', breakpoints = [360, 64
     if (isCloudinary) {
       // Remove any existing transformations we might have injected
       u = u.replace(/\/upload\/(?:f_[^/]+,q_[^/]+,w_\d+,c_limit\/)?/, '/upload/');
-      // Inject new transformations
-      return u.replace('/upload/', `/upload/f_auto,q_auto,w_${w},c_limit/`);
+      // Inject new transformations with q_60 for maximum speed
+      return u.replace('/upload/', `/upload/f_auto,q_60,w_${w},c_limit/`);
     }
     // For other hosts we just return the original; srcset won't be provided
     return u;
