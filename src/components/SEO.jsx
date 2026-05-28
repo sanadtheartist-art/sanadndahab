@@ -8,7 +8,7 @@ const SEO = () => {
     if (loading || !settings) return;
 
     // Title
-    const title = settings.seoTitle || settings.artistName || 'Art Portfolio';
+    const title = settings.seoTitle || settings.artistName || 'Sanad in Dahab | Mural Artist & Street Art in Sinai Egypt';
     document.title = title;
 
     // Meta Description
@@ -18,7 +18,7 @@ const SEO = () => {
       metaDesc.name = 'description';
       document.head.appendChild(metaDesc);
     }
-    metaDesc.content = settings.seoDescription || settings.aboutLead || '';
+    metaDesc.content = settings.seoDescription || settings.aboutLead || 'Sanad\'s custom graffiti and wall paintings across Dahab, Nuweiba, and Sinai. Explore vibrant street art combining Egyptian culture with modern design.';
 
     // Favicon
     if (settings.faviconUrl) {
@@ -107,23 +107,40 @@ const SEO = () => {
     }
 
     // Basic structured data (JSON-LD)
-    if (settings.seoTitle) {
-      let ld = document.getElementById('site-json-ld');
-      const json = {
-        "@context": "https://schema.org",
-        "@type": "Person",
-        "name": settings.artistName || settings.seoTitle,
-        "description": settings.seoDescription || metaDesc.content || '',
-        "url": settings.canonicalUrl || window.location.origin,
-      };
-      if (!ld) {
-        ld = document.createElement('script');
-        ld.type = 'application/ld+json';
-        ld.id = 'site-json-ld';
-        document.head.appendChild(ld);
-      }
-      ld.textContent = JSON.stringify(json);
+    let ld = document.getElementById('site-json-ld');
+    const json = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "name": settings.artistName || 'Sanad',
+          "description": settings.seoDescription || metaDesc.content || '',
+          "url": settings.canonicalUrl || window.location.origin,
+        },
+        {
+          "@type": "LocalBusiness",
+          "name": settings.artistName || "Sanad in Dahab Murals",
+          "image": settings.ogImage || `${window.location.origin}/favicon.svg`,
+          "description": settings.seoDescription || metaDesc.content || '',
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Dahab",
+            "addressRegion": "South Sinai Governorate",
+            "addressCountry": "EG"
+          },
+          "url": settings.canonicalUrl || window.location.origin,
+          "telephone": "+201000000000",
+          "priceRange": "$$"
+        }
+      ]
+    };
+    if (!ld) {
+      ld = document.createElement('script');
+      ld.type = 'application/ld+json';
+      ld.id = 'site-json-ld';
+      document.head.appendChild(ld);
     }
+    ld.textContent = JSON.stringify(json);
 
   }, [settings, loading]);
 
