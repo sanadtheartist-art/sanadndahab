@@ -8,7 +8,7 @@ const SEO = () => {
     if (loading || !settings) return;
 
     // Title
-    const title = settings.seoTitle || settings.artistName || 'Sanad in Dahab | Mural Artist & Street Art in Sinai Egypt';
+    const title = settings.seoTitle || settings.artistName || 'SANADNDAHAB | Mural Artist & Street Art in Sinai Egypt';
     document.title = title;
 
     // Meta Description
@@ -147,7 +147,7 @@ const SEO = () => {
         },
         {
           "@type": "LocalBusiness",
-          "name": settings.artistName || "Sanad in Dahab Murals",
+          "name": settings.artistName || "SANADNDAHAB Murals",
           "image": settings.ogImage || `${baseUrl}/favicon.svg`,
           "description": settings.seoDescription || metaDesc.content || '',
           "address": {
