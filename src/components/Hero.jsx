@@ -162,7 +162,7 @@ const Hero = () => {
           <div style={{ height: '1px', width: '2.5rem', background: 'var(--accent)', opacity: 0.6 }} />
         </div>
 
-        {/* Title */}
+        {/* Title — word-by-word staggered reveal */}
         <h1
           ref={titleRef}
           id="hero-title"
@@ -170,14 +170,39 @@ const Hero = () => {
             fontFamily: 'var(--font-display)',
             fontSize: 'clamp(3rem, 9vw, 7.5rem)',
             fontWeight: 300,
-            lineHeight: 1.06,
+            lineHeight: 1.1,
             letterSpacing: '-0.01em',
             color: 'var(--text)',
             marginBottom: '1.5rem',
-            animation: 'fadeUp 1s 0.1s cubic-bezier(0.16,1,0.3,1) both',
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: '0 0.28em',
+            overflow: 'hidden',
           }}
-          dangerouslySetInnerHTML={{ __html: title }}
-        />
+          aria-label={title.replace(/<[^>]*>/g, '')}
+        >
+          {title.replace(/<[^>]*>/g, '').split(' ').map((word, i) => (
+            <span
+              key={i}
+              aria-hidden="true"
+              style={{
+                display: 'inline-block',
+                overflow: 'hidden',
+                lineHeight: 1.12,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  animation: `wordReveal 0.85s ${0.05 + i * 0.12}s cubic-bezier(0.16,1,0.3,1) both`,
+                }}
+              >
+                {word}
+              </span>
+            </span>
+          ))}
+        </h1>
 
         {/* Subtitle */}
         <p
