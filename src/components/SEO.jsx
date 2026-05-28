@@ -103,11 +103,15 @@ const SEO = () => {
         canonical.rel = 'canonical';
         document.head.appendChild(canonical);
       }
-      canonical.href = settings.canonicalUrl;
+      // Ensure we use the base non-www URL + the current path
+      const baseUrl = settings.canonicalUrl.replace(/\/$/, ''); // Remove trailing slash
+      canonical.href = `${baseUrl}${window.location.pathname}`;
     }
 
     // Basic structured data (JSON-LD)
     let ld = document.getElementById('site-json-ld');
+    const baseUrl = settings.canonicalUrl ? settings.canonicalUrl.replace(/\/$/, '') : window.location.origin;
+    const currentUrl = `${baseUrl}${window.location.pathname}`;
     const json = {
       "@context": "https://schema.org",
       "@graph": [
@@ -115,12 +119,12 @@ const SEO = () => {
           "@type": "Person",
           "name": settings.artistName || 'Sanad',
           "description": settings.seoDescription || metaDesc.content || '',
-          "url": settings.canonicalUrl || window.location.origin,
+          "url": currentUrl,
         },
         {
           "@type": "LocalBusiness",
           "name": settings.artistName || "Sanad in Dahab Murals",
-          "image": settings.ogImage || `${window.location.origin}/favicon.svg`,
+          "image": settings.ogImage || `${baseUrl}/favicon.svg`,
           "description": settings.seoDescription || metaDesc.content || '',
           "address": {
             "@type": "PostalAddress",
@@ -128,7 +132,7 @@ const SEO = () => {
             "addressRegion": "South Sinai Governorate",
             "addressCountry": "EG"
           },
-          "url": settings.canonicalUrl || window.location.origin,
+          "url": currentUrl,
           "telephone": "+201000000000",
           "priceRange": "$$"
         }
