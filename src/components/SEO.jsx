@@ -20,6 +20,17 @@ const SEO = () => {
     }
     metaDesc.content = settings.seoDescription || settings.aboutLead || 'Sanad\'s custom graffiti and wall paintings across Dahab, Nuweiba, and Sinai. Explore vibrant street art combining Egyptian culture with modern design.';
 
+    // Keywords
+    if (settings.metaKeywords) {
+      let keywordsMeta = document.querySelector('meta[name="keywords"]');
+      if (!keywordsMeta) {
+        keywordsMeta = document.createElement('meta');
+        keywordsMeta.name = 'keywords';
+        document.head.appendChild(keywordsMeta);
+      }
+      keywordsMeta.content = settings.metaKeywords;
+    }
+
     // Favicon
     if (settings.faviconUrl) {
       let icon = document.querySelector('link[rel="icon"]');
