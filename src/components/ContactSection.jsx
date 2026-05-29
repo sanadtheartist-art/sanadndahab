@@ -3,6 +3,7 @@ import { useSiteSettings } from '../lib/SiteContext';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useIsMobile } from '../lib/useIsMobile';
+import { CoralBranch, Bubbles, Fish } from './Decorations';
 
 const ContactSection = ({ sectionId = 'contact' }) => {
   const { settings, loading } = useSiteSettings();
@@ -63,6 +64,11 @@ const ContactSection = ({ sectionId = 'contact' }) => {
         borderTop: '1px solid var(--border)',
       }}
     >
+      {/* Decorative elements */}
+      <CoralBranch style={{ top: '5%', left: '2%', color: 'var(--accent)', width: '120px', transform: 'rotate(15deg)', opacity: 0.03 }} />
+      <Bubbles style={{ top: '20%', right: '5%', color: 'var(--accent)', width: '70px', opacity: 0.03 }} />
+      <Fish style={{ bottom: '10%', left: '8%', color: 'var(--accent)', width: '45px', opacity: 0.025 }} />
+
       {/* Background decorative text */}
       <div aria-hidden="true" style={{
         position: 'absolute',

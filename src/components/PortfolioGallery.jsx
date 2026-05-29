@@ -3,6 +3,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Link } from 'react-router-dom';
 import { useIsMobile } from '../lib/useIsMobile';
+import { SeaWaves, PencilLine, DesertDunes } from './Decorations';
 
 const getThumb = (url) => {
   if (!url) return '';
@@ -231,11 +232,18 @@ const PortfolioGallery = ({ sectionId = 'works', settings = {} }) => {
     <section
       id={sectionId}
       style={{
+        position: 'relative',
         maxWidth: '1200px',
         margin: '0 auto',
         padding: 'clamp(4rem, 8vw, 7rem) 1rem',
+        overflow: 'hidden',
       }}
     >
+      {/* Decorative elements */}
+      <SeaWaves style={{ top: '3rem', left: 0, color: 'var(--accent)' }} />
+      <PencilLine style={{ top: '10%', right: '0', color: 'var(--accent)', width: '130px', transform: 'rotate(5deg)' }} />
+      <DesertDunes style={{ bottom: 0, left: 0, color: 'var(--accent)' }} />
+
       {/* Header */}
       <div style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>

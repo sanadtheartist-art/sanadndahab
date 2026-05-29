@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useSiteSettings } from '../lib/SiteContext';
 import { useIsMobile } from '../lib/useIsMobile';
+import { PaintPalette, BrushStroke, Starfish } from './Decorations';
 
 const upgradeImageUrl = (url) => {
   if (!url) return '';
@@ -56,11 +57,18 @@ const AboutSection = ({ sectionId = 'about' }) => {
       id={sectionId}
       ref={sectionRef}
       style={{
+        position: 'relative',
         maxWidth: '1200px',
         margin: '0 auto',
         padding: 'clamp(4rem, 8vw, 7rem) 1.5rem',
+        overflow: 'hidden',
       }}
     >
+      {/* Decorative elements */}
+      <PaintPalette style={{ top: '5%', right: '2%', color: 'var(--accent)', width: '120px', transform: 'rotate(12deg)' }} />
+      <BrushStroke style={{ bottom: '8%', left: '0', color: 'var(--accent)', width: '200px', transform: 'rotate(-3deg)' }} />
+      <Starfish style={{ bottom: '15%', right: '8%', color: 'var(--accent)', width: '40px', transform: 'rotate(18deg)' }} />
+
       {/* Section label */}
       <div className="reveal" style={{
         display: 'flex',

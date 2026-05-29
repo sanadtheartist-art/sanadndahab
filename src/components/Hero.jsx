@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSiteSettings } from '../lib/SiteContext';
 import { useIsMobile } from '../lib/useIsMobile';
+import { CoralBranch, Fish, PaintSplatter, Bubbles, MountainSilhouette } from './Decorations';
 
 function getPageSections(d) {
   if (d.pageSections && d.pageSections.length) {
@@ -136,6 +137,15 @@ const Hero = () => {
         backgroundSize: '80px 80px',
         maskImage: 'radial-gradient(ellipse at center, #000 30%, transparent 75%)',
       }} />
+
+      {/* Decorative elements */}
+      <CoralBranch style={{ bottom: '2rem', left: '3%', color: 'var(--accent)', transform: 'rotate(-8deg)' }} />
+      <CoralBranch style={{ bottom: '1rem', right: '5%', color: 'var(--accent)', transform: 'scaleX(-1) rotate(5deg)', width: '140px' }} />
+      <Fish style={{ top: '22%', right: '8%', color: 'var(--accent)', width: '50px', opacity: 0.03 }} />
+      <Fish flip style={{ top: '35%', left: '5%', color: 'var(--accent)', width: '40px', opacity: 0.025 }} />
+      <PaintSplatter style={{ top: '12%', left: '10%', color: 'var(--accent)', width: '110px', opacity: 0.02, transform: 'rotate(-15deg)' }} />
+      <Bubbles style={{ bottom: '15%', right: '12%', color: 'var(--accent)', width: '60px' }} />
+      <MountainSilhouette style={{ bottom: 0, left: 0, color: 'var(--accent)', zIndex: 1 }} />
 
       {/* Main content */}
       <div style={{
