@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { siteSettings } from '../config/siteSettings';
+import { siteSettings as defaultSettings } from '../config/siteSettings';
+import { db } from './firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 const SiteContext = createContext();
 
@@ -70,21 +72,42 @@ function applyTheme(theme = {}) {
 }
 
 export const SiteProvider = ({ children }) => {
-  const [settings, setSettings] = useState(siteSettings);
-  const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState(defaultSettings);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Load Firebase settings and merge with defaults
+    const settingsRef = doc(db, "settings", "site");
+    const unsubscribe = onSnapshot(settingsRef, (snap) => {
+      if (snap.exists()) {
+        // Merge Firebase settings with defaults
+        const merged = { ...defaultSettings, ...snap.data() };
+        setSettings(merged);
+      } else {
+        setSettings(defaultSettings);
+      }
+      setLoading(false);
+    }, (err) => {
+      console.warn("Could not load settings from Firebase, using defaults:", err);
+      setSettings(defaultSettings);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Apply theme CSS vars immediately
-    if (siteSettings.theme) {
-      applyTheme(siteSettings.theme);
+    if (settings.theme) {
+      applyTheme(settings.theme);
     }
 
     // Dynamically update SEO metadata (Title only)
-    const siteTitle = siteSettings.artistName || (siteSettings.heroTitle ? siteSettings.heroTitle.replace(/<[^>]+>/g, '') : 'Artist Portfolio');
+    const siteTitle = settings.artistName || (settings.heroTitle ? settings.heroTitle.replace(/<[^>]+>/g, '') : 'Artist Portfolio');
     document.title = siteTitle;
     
     // Preload hero image if supplied to help LCP
-    const heroUrl = siteSettings.heroImage || siteSettings.theme?.heroImage || siteSettings.ogImage || siteSettings.aboutImage;
+    const heroUrl = settings.heroImage || settings.theme?.heroImage || settings.ogImage || settings.aboutImage;
     if (heroUrl) {
       const existing = document.querySelector('link[rel="preload"][data-hero-preload]');
       const href = heroUrl.startsWith('http') ? heroUrl : heroUrl;
@@ -100,7 +123,7 @@ export const SiteProvider = ({ children }) => {
         document.head.appendChild(l);
       }
     }
-  }, []);
+  }, [settings]);
 
   return (
     <SiteContext.Provider value={{ settings, loading }}>

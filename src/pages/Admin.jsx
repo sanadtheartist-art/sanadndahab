@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, setDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 import AdminProjectModal from './AdminProjectModal';
@@ -22,17 +22,23 @@ const Admin = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [syncingProjects, setSyncingProjects] = useState({});
   
+  const [siteSettings, setSiteSettings] = useState({});
+  const [loadingSettings, setLoadingSettings] = useState(false);
+  const [settingsSaved, setSettingsSaved] = useState(false);
+  
   const [currentTab, setCurrentTab] = useState('dashboard'); // 'dashboard' | 'portfolio' | 'settings' | 'messages'
   const [editingProject, setEditingProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     let unsubscribeMessages = () => {};
+    let unsubscribeSettings = () => {};
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoadingAuth(false);
       if (currentUser) {
         fetchData();
+        fetchSettings();
         
         // Listen to contact messages in real-time
         setLoadingMessages(true);
@@ -46,14 +52,27 @@ const Admin = () => {
           console.error("Failed to sync messages:", err);
           setLoadingMessages(false);
         });
+
+        // Listen to site settings in real-time
+        const settingsRef = doc(db, "settings", "site");
+        unsubscribeSettings = onSnapshot(settingsRef, (snap) => {
+          if (snap.exists()) {
+            setSiteSettings(snap.data());
+          }
+        }, (err) => {
+          console.error("Failed to load settings:", err);
+        });
       } else {
         setMessages([]);
+        setSiteSettings({});
         unsubscribeMessages();
+        unsubscribeSettings();
       }
     });
     return () => {
       unsubscribe();
       unsubscribeMessages();
+      unsubscribeSettings();
     };
   }, []);
 
@@ -76,6 +95,37 @@ const Admin = () => {
       console.error(err);
     } finally {
       setLoadingData(false);
+    }
+  };
+
+  const fetchSettings = async () => {
+    setLoadingSettings(true);
+    try {
+      const settingsRef = doc(db, "settings", "site");
+      const snap = await getDocs(collection(db, "settings"));
+      snap.forEach(d => {
+        if (d.id === "site") {
+          setSiteSettings(d.data());
+        }
+      });
+    } catch (err) {
+      console.error("Failed to fetch settings:", err);
+    } finally {
+      setLoadingSettings(false);
+    }
+  };
+
+  const handleSettingsUpdate = async (field, value) => {
+    const updated = { ...siteSettings, [field]: value };
+    setSiteSettings(updated);
+    
+    try {
+      await setDoc(doc(db, "settings", "site"), updated, { merge: true });
+      setSettingsSaved(true);
+      setTimeout(() => setSettingsSaved(false), 2000);
+    } catch (err) {
+      console.error("Failed to update settings:", err);
+      alert("Failed to save settings");
     }
   };
 
@@ -260,6 +310,7 @@ const Admin = () => {
           <div className="nav-group">
             <div className="nav-group-label">Content</div>
             <button className={`nav-btn ${currentTab === 'media' ? 'active' : ''}`} onClick={() => setCurrentTab('media')}><span className="icon">▦</span> Media Library</button>
+            <button className={`nav-btn ${currentTab === 'settings' ? 'active' : ''}`} onClick={() => setCurrentTab('settings')}><span className="icon">⚙</span> Site Settings</button>
           </div>
 
           <div className="nav-group">
@@ -281,6 +332,7 @@ const Admin = () => {
               {currentTab === 'media' && 'Media Library'}
               {currentTab === 'portfolio' && 'Manage Projects'}
               {currentTab === 'messages' && 'Inbox Messages'}
+              {currentTab === 'settings' && 'Site Settings'}
             </h2>
             <div className="topbar-actions">
               <span className="badge live">Signed in</span>
@@ -389,6 +441,60 @@ const Admin = () => {
             {currentTab === 'media' && (
               <div className="panel active" style={{maxWidth: '1200px'}}>
                 <MediaLibrary />
+              </div>
+            )}
+
+            {currentTab === 'settings' && (
+              <div className="panel active" style={{maxWidth: '880px'}}>
+                <p className="panel-desc">Manage hero and about section images.</p>
+                
+                <div className="card">
+                  <div className="card-title">Hero Section Image</div>
+                  
+                  {siteSettings.heroImage && (
+                    <div style={{marginBottom: '16px'}}>
+                      <p style={{fontSize: '0.85rem', color: 'var(--dim)', marginBottom: '8px'}}>Current image:</p>
+                      <img src={siteSettings.heroImage} alt="Hero" style={{maxWidth: '100%', maxHeight: '200px', borderRadius: '4px', marginBottom: '12px'}} />
+                    </div>
+                  )}
+                  
+                  <div className="field">
+                    <label>Hero Image URL</label>
+                    <input 
+                      type="text" 
+                      placeholder="https://example.com/image.jpg" 
+                      value={siteSettings.heroImage || ''} 
+                      onChange={(e) => handleSettingsUpdate('heroImage', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="card-title">About Section Image</div>
+                  
+                  {siteSettings.aboutImage && (
+                    <div style={{marginBottom: '16px'}}>
+                      <p style={{fontSize: '0.85rem', color: 'var(--dim)', marginBottom: '8px'}}>Current image:</p>
+                      <img src={siteSettings.aboutImage} alt="About" style={{maxWidth: '100%', maxHeight: '200px', borderRadius: '4px', marginBottom: '12px'}} />
+                    </div>
+                  )}
+                  
+                  <div className="field">
+                    <label>About Image URL</label>
+                    <input 
+                      type="text" 
+                      placeholder="https://example.com/image.jpg" 
+                      value={siteSettings.aboutImage || ''} 
+                      onChange={(e) => handleSettingsUpdate('aboutImage', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {settingsSaved && (
+                  <div style={{padding: '12px', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', borderRadius: '4px', marginTop: '16px'}}>
+                    ✓ Settings saved successfully
+                  </div>
+                )}
               </div>
             )}
 
