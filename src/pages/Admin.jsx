@@ -25,6 +25,7 @@ const Admin = () => {
   const [siteSettings, setSiteSettings] = useState({});
   const [loadingSettings, setLoadingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
   
   const [currentTab, setCurrentTab] = useState('dashboard'); // 'dashboard' | 'portfolio' | 'settings' | 'messages'
   const [editingProject, setEditingProject] = useState(null);
@@ -126,6 +127,22 @@ const Admin = () => {
     } catch (err) {
       console.error("Failed to update settings:", err);
       alert("Failed to save settings");
+    }
+  };
+
+  const handleImageUpload = async (e, field) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      await handleSettingsUpdate(field, url);
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("Failed to upload image to Cloudinary");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -446,7 +463,7 @@ const Admin = () => {
 
             {currentTab === 'settings' && (
               <div className="panel active" style={{maxWidth: '880px'}}>
-                <p className="panel-desc">Manage hero and about section images.</p>
+                <p className="panel-desc">Upload and manage hero and about section images.</p>
                 
                 <div className="card">
                   <div className="card-title">Hero Section Image</div>
@@ -459,12 +476,30 @@ const Admin = () => {
                   )}
                   
                   <div className="field">
-                    <label>Hero Image URL</label>
+                    <label>Upload New Hero Image</label>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={(e) => handleImageUpload(e, 'heroImage')}
+                      disabled={uploading}
+                    />
+                    <p style={{fontSize: '0.75rem', color: 'var(--dim)', marginTop: '4px'}}>
+                      Will automatically upload to Cloudinary and save
+                    </p>
+                  </div>
+
+                  <div className="field">
+                    <label>Or paste URL</label>
                     <input 
                       type="text" 
                       placeholder="https://example.com/image.jpg" 
-                      value={siteSettings.heroImage || ''} 
-                      onChange={(e) => handleSettingsUpdate('heroImage', e.target.value)}
+                      defaultValue={siteSettings.heroImage || ''} 
+                      onChange={(e) => {
+                        clearTimeout(window.heroTimeout);
+                        window.heroTimeout = setTimeout(() => {
+                          handleSettingsUpdate('heroImage', e.target.value);
+                        }, 1000);
+                      }}
                     />
                   </div>
                 </div>
@@ -480,17 +515,41 @@ const Admin = () => {
                   )}
                   
                   <div className="field">
-                    <label>About Image URL</label>
+                    <label>Upload New About Image</label>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={(e) => handleImageUpload(e, 'aboutImage')}
+                      disabled={uploading}
+                    />
+                    <p style={{fontSize: '0.75rem', color: 'var(--dim)', marginTop: '4px'}}>
+                      Will automatically upload to Cloudinary and save
+                    </p>
+                  </div>
+
+                  <div className="field">
+                    <label>Or paste URL</label>
                     <input 
                       type="text" 
                       placeholder="https://example.com/image.jpg" 
-                      value={siteSettings.aboutImage || ''} 
-                      onChange={(e) => handleSettingsUpdate('aboutImage', e.target.value)}
+                      defaultValue={siteSettings.aboutImage || ''} 
+                      onChange={(e) => {
+                        clearTimeout(window.aboutTimeout);
+                        window.aboutTimeout = setTimeout(() => {
+                          handleSettingsUpdate('aboutImage', e.target.value);
+                        }, 1000);
+                      }}
                     />
                   </div>
                 </div>
 
-                {settingsSaved && (
+                {uploading && (
+                  <div style={{padding: '12px', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', borderRadius: '4px', marginTop: '16px'}}>
+                    ⏳ Uploading to Cloudinary...
+                  </div>
+                )}
+
+                {settingsSaved && !uploading && (
                   <div style={{padding: '12px', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', borderRadius: '4px', marginTop: '16px'}}>
                     ✓ Settings saved successfully
                   </div>
