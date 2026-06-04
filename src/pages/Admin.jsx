@@ -5,6 +5,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebas
 import AdminProjectModal from './AdminProjectModal';
 import AdminMessages from '../components/AdminMessages';
 import MediaLibrary from '../components/MediaLibrary';
+import AdminSettings from '../components/AdminSettings';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import '../admin.css';
 
@@ -259,6 +260,7 @@ const Admin = () => {
 
           <div className="nav-group">
             <div className="nav-group-label">Content</div>
+            <button className={`nav-btn ${currentTab === 'settings' ? 'active' : ''}`} onClick={() => setCurrentTab('settings')}><span className="icon">⚙</span> Site Images</button>
             <button className={`nav-btn ${currentTab === 'media' ? 'active' : ''}`} onClick={() => setCurrentTab('media')}><span className="icon">▦</span> Media Library</button>
           </div>
 
@@ -278,6 +280,7 @@ const Admin = () => {
           <header className="topbar">
             <h2>
               {currentTab === 'dashboard' && 'Dashboard'}
+              {currentTab === 'settings' && 'Site Images'}
               {currentTab === 'media' && 'Media Library'}
               {currentTab === 'portfolio' && 'Manage Projects'}
               {currentTab === 'messages' && 'Inbox Messages'}
@@ -383,6 +386,12 @@ const Admin = () => {
             {currentTab === 'messages' && (
               <div className="panel active">
                 <AdminMessages messages={messages} loading={loadingMessages} />
+              </div>
+            )}
+
+            {currentTab === 'settings' && (
+              <div className="panel active">
+                <AdminSettings />
               </div>
             )}
 

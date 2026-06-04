@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
 import { siteSettings } from '../config/siteSettings';
 
 const SiteContext = createContext();
@@ -71,35 +73,49 @@ function applyTheme(theme = {}) {
 
 export const SiteProvider = ({ children }) => {
   const [settings, setSettings] = useState(siteSettings);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Apply theme CSS vars immediately
-    if (siteSettings.theme) {
-      applyTheme(siteSettings.theme);
-    }
-
-    // Dynamically update SEO metadata (Title only)
-    const siteTitle = siteSettings.artistName || (siteSettings.heroTitle ? siteSettings.heroTitle.replace(/<[^>]+>/g, '') : 'Artist Portfolio');
-    document.title = siteTitle;
-    
-    // Preload hero image if supplied to help LCP
-    const heroUrl = siteSettings.heroImage || siteSettings.theme?.heroImage || siteSettings.ogImage || siteSettings.aboutImage;
-    if (heroUrl) {
-      const existing = document.querySelector('link[rel="preload"][data-hero-preload]');
-      const href = heroUrl.startsWith('http') ? heroUrl : heroUrl;
-      if (existing) {
-        existing.href = href;
-      } else {
-        const l = document.createElement('link');
-        l.rel = 'preload';
-        l.as = 'image';
-        l.setAttribute('data-hero-preload', '1');
-        l.href = href;
-        try { l.setAttribute('fetchpriority', 'high'); } catch (e) { }
-        document.head.appendChild(l);
+    const unsub = onSnapshot(doc(db, "settings", "global"), (docSnap) => {
+      let currentSettings = { ...siteSettings };
+      if (docSnap.exists()) {
+        currentSettings = { ...currentSettings, ...docSnap.data() };
       }
-    }
+      setSettings(currentSettings);
+      setLoading(false);
+
+      // Apply theme CSS vars immediately
+      if (currentSettings.theme) {
+        applyTheme(currentSettings.theme);
+      }
+
+      // Dynamically update SEO metadata (Title only)
+      const siteTitle = currentSettings.artistName || (currentSettings.heroTitle ? currentSettings.heroTitle.replace(/<[^>]+>/g, '') : 'Artist Portfolio');
+      document.title = siteTitle;
+      
+      // Preload hero image if supplied to help LCP
+      const heroUrl = currentSettings.heroImage || currentSettings.theme?.heroImage || currentSettings.ogImage || currentSettings.aboutImage;
+      if (heroUrl) {
+        const existing = document.querySelector('link[rel="preload"][data-hero-preload]');
+        const href = heroUrl.startsWith('http') ? heroUrl : heroUrl;
+        if (existing) {
+          existing.href = href;
+        } else {
+          const l = document.createElement('link');
+          l.rel = 'preload';
+          l.as = 'image';
+          l.setAttribute('data-hero-preload', '1');
+          l.href = href;
+          try { l.setAttribute('fetchpriority', 'high'); } catch (e) { }
+          document.head.appendChild(l);
+        }
+      }
+    }, (error) => {
+      console.error("Error fetching settings:", error);
+      setLoading(false);
+    });
+
+    return unsub;
   }, []);
 
   return (
